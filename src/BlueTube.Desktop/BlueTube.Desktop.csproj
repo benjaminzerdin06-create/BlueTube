@@ -7,9 +7,12 @@
     <Nullable>enable</Nullable>
     <AssemblyName>BlueTube</AssemblyName>
     <RootNamespace>BlueTube.Desktop</RootNamespace>
-    <!-- Windows: GUI app, no console window. The server runs hidden and stops 30 s after the last window closes.
-         Linux: no effect (same as Exe). -->
-    <OutputType>WinExe</OutputType>
+    <!-- Windows: no console window. The server runs hidden and stops 30 s after the last window closes.
+         Do NOT use OutputType=WinExe: the SDK then drops _framework/blazor.web.js (pages stop working).
+         Instead keep Exe and ask the SDK for a GUI (subsystem 2) apphost. Internal SDK property, checked in
+         SDK 10.0.401 (Microsoft.NET.Sdk.targets). The desktop CI workflow checks both effects. -->
+    <OutputType>Exe</OutputType>
+    <_UseWindowsGraphicalUserInterface Condition="$(RuntimeIdentifier.StartsWith('win'))">true</_UseWindowsGraphicalUserInterface>
     <!-- Windows: icon of BlueTube.exe (Explorer, taskbar, shortcuts). 16-256 px. -->
     <ApplicationIcon>bluetube.ico</ApplicationIcon>
   </PropertyGroup>

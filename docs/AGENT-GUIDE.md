@@ -342,7 +342,7 @@ Host: `src/BlueTube.Desktop`. It shows the **same** pages as the phone (from `Bl
 
 | Task | What to do |
 |---|---|
-| Run from source (test data, no window) | `dotnet run --project src/BlueTube.Desktop -- --no-window --data <scratch folder>`. Then open `http://127.0.0.1:5217` in the built-in browser pane. Stop: kill the process on port 5217. The app is `WinExe` (no console): read `<data folder>/bluetube.log`, not stdout. |
+| Run from source (test data, no window) | `dotnet run --project src/BlueTube.Desktop -- --no-window --data <scratch folder>`. Then open `http://127.0.0.1:5217` in the built-in browser pane. Stop: kill the process on port 5217. The Windows exe has no console: read `<data folder>/bluetube.log`, not stdout. |
 | Port 5217 busy | The owner may be running BlueTube. Then your test copy exits at once and your requests reach the owner's copy (real data). Check the process path on port 5217 first. Publish to a new folder if `artifacts/desktop/win-x64` is locked. |
 | Run with a window | `dotnet run --project src/BlueTube.Desktop`. Opens Edge/Chrome in `--app` mode. **Uses the owner's real desktop data** (`%LOCALAPPDATA%\BlueTube`). |
 | Publish | `dotnet publish src/BlueTube.Desktop -c Release -r win-x64 --self-contained -o artifacts/desktop/win-x64` (also `linux-x64`). `artifacts/` is git-ignored. |
@@ -372,6 +372,8 @@ Channel export/import (`ChannelTransfer`): the JSON has `id`, `title`, `thumbnai
 | CS0542 | `@inject X Feed` inside `Feed.razor` | Use a different property name. |
 | Header under status bar | WebView draws edge-to-edge | `SafeAreaEdges="All"` on `MainPage.xaml`. Keep it. |
 | Desktop: `_content/...` gives 500 | Static web assets off outside Development | `builder.WebHost.UseStaticWebAssets()` in Desktop `Program.cs`. |
+| Desktop: `blazor.web.js` 404, pages dead | `OutputType=WinExe` makes the SDK drop it | Keep `OutputType=Exe` + `_UseWindowsGraphicalUserInterface=true` (no console). CI checks both. |
+| Desktop: "Rejoin failed" | Server process stopped (old builds: console window closed) | Current build has no console. Start `BlueTube.exe` again. |
 | Install fails `NO_MATCHING_ABIS` | Phone is 32-bit only | Keep `<RuntimeIdentifiers>android-arm;android-arm64</RuntimeIdentifiers>` in `BlueTube.App.csproj`. |
 | Literal `@` in markup | Razor treats `@` as code | Write `@@`. |
 | Raw string JSON in tests fails CS9007 | `}}` inside a `$$"""` string | Use `$$$"""` with `{{{x}}}`, or a plain `"""` string plus `.Replace`. |
