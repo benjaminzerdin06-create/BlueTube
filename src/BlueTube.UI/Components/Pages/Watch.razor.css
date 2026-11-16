@@ -8,6 +8,9 @@
     position: relative;
     aspect-ratio: 16 / 9;
     background: #000;
+    /* Wide screen (desktop): keep title and buttons visible below the player. */
+    width: min(100%, calc((100vh - 220px) * 16 / 9));
+    margin: 0 auto;
 }
 
 .player iframe {

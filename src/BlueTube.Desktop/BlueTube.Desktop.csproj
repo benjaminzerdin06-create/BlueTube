@@ -7,7 +7,14 @@
     <Nullable>enable</Nullable>
     <AssemblyName>BlueTube</AssemblyName>
     <RootNamespace>BlueTube.Desktop</RootNamespace>
+    <!-- Windows: icon of BlueTube.exe (Explorer, taskbar, shortcuts). 16-256 px. -->
+    <ApplicationIcon>bluetube.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Linux: icon for a .desktop launcher. Copied next to the executable. -->
+    <None Update="bluetube.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\BlueTube.Core\BlueTube.Core.csproj" />

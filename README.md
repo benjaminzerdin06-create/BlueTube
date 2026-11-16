@@ -42,8 +42,18 @@ dotnet publish src/BlueTube.Desktop -c Release -r linux-x64 --self-contained -o 
 
 ### Start it
 
-- Windows: double-click `BlueTube.exe`.
-- Linux: `chmod +x BlueTube` once, then `./BlueTube`.
+- Windows: double-click `BlueTube.exe`. For a desktop icon: right-click it → **Send to → Desktop (create shortcut)**.
+- Linux: `chmod +x BlueTube` once, then `./BlueTube`. For a menu entry with icon, create `~/.local/share/applications/bluetube.desktop` (replace `/path/to` with the folder):
+
+```ini
+[Desktop Entry]
+Type=Application
+Name=BlueTube
+Exec=/path/to/BlueTube
+Icon=/path/to/bluetube.png
+Terminal=false
+Categories=AudioVideo;Video;
+```
 
 BlueTube opens in an app window (Edge or Chrome app mode). If neither is installed, it opens in your default browser.
 
