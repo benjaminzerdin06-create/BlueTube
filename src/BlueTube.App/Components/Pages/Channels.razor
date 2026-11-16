@@ -1,0 +1,143 @@
+@page "/channels"
+@inject FeedService Feed
+@inject IVideoRepository Repo
+
+<header class="page-header"><h1>Channels</h1></header>
+
+<div class="page-body">
+    <form class="add" @onsubmit="AddAsync">
+        <input placeholder="@@handle, UC... ID or channel URL" @bind="_input" disabled="@_busy" />
+        <input placeholder="Tags, comma-separated (optional)" @bind="_tags" disabled="@_busy" />
+        <button class="primary" type="submit" disabled="@(_busy || string.IsNullOrWhiteSpace(_input))">
+            @(_busy ? "Adding…" : "Add channel")
+        </button>
+    </form>
+
+    @if (_message is not null)
+    {
+        <p class="message @(_messageIsError ? "error" : "")">@_message</p>
+    }
+
+    @if (_channels is null)
+    {
+        <div class="state"><div class="spinner"></div></div>
+    }
+    else if (_channels.Count == 0)
+    {
+        <div class="state">No channels. Add one above.</div>
+    }
+    else
+    {
+        <ul class="list">
+            @foreach (var c in _channels)
+            {
+                <li @key="c.Id">
+                    <img src="@c.ThumbnailUrl" alt="" loading="lazy" />
+                    <div class="main">
+                        <div class="name">@c.Title</div>
+                        @if (_editingId == c.Id)
+                        {
+                            <form class="edit" @onsubmit="() => SaveTagsAsync(c)">
+                                <input @bind="_editTags" placeholder="unity, csharp" />
+                                <button type="submit">Save</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <div class="tags" @onclick="() => StartEdit(c)">
+                                @if (c.TagList.Count == 0)
+                                {
+                                    <span class="hint">+ tags</span>
+                                }
+                                @foreach (var t in c.TagList)
+                                {
+                                    <TagChip Tag="@t" />
+                                }
+                            </div>
+                        }
+                    </div>
+                    @if (_confirmDeleteId == c.Id)
+                    {
+                        <button class="danger" @onclick="() => DeleteAsync(c)">Remove?</button>
+                    }
+                    else
+                    {
+                        <button class="remove" @onclick="() => _confirmDeleteId = c.Id" aria-label="Remove">✕</button>
+                    }
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    private IReadOnlyList<Channel>? _channels;
+    private string _input = "";
+    private string _tags = "";
+    private bool _busy;
+    private string? _message;
+    private bool _messageIsError;
+    private string? _editingId;
+    private string _editTags = "";
+    private string? _confirmDeleteId;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync() => _channels = await Repo.GetChannelsAsync();
+
+    private async Task AddAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_input)) return;
+        _busy = true;
+        _message = null;
+        try
+        {
+            var channel = await Feed.AddChannelAsync(_input, TagHelper.Parse(_tags));
+            if (channel is null)
+            {
+                Show("Channel not found.", error: true);
+            }
+            else
+            {
+                Show($"Added {channel.Title}. Refresh the feed to get videos.", error: false);
+                _input = "";
+                _tags = "";
+                await LoadAsync();
+            }
+        }
+        catch (Exception e)
+        {
+            Show(ErrorText.For(e), error: true);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void StartEdit(Channel c)
+    {
+        _editingId = c.Id;
+        _editTags = c.Tags.Replace(",", ", ");
+    }
+
+    private async Task SaveTagsAsync(Channel c)
+    {
+        c.TagList = TagHelper.Parse(_editTags);
+        await Repo.UpsertChannelAsync(c);
+        _editingId = null;
+    }
+
+    private async Task DeleteAsync(Channel c)
+    {
+        await Repo.DeleteChannelAsync(c.Id);
+        _confirmDeleteId = null;
+        await LoadAsync();
+    }
+
+    private void Show(string text, bool error)
+    {
+        _message = text;
+        _messageIsError = error;
+    }
+}

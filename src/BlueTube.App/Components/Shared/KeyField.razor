@@ -1,0 +1,44 @@
+@inject ISecretStore Secrets
+
+@* Never shows the stored key. Shows only if a key is set. *@
+<div class="key-field">
+    <input type="password" placeholder="@(_hasKey ? "Key saved. Enter a new key to replace it." : "Paste key")"
+           @bind="_value" autocomplete="off" />
+    <div class="row">
+        <button class="primary" @onclick="SaveAsync" disabled="@string.IsNullOrWhiteSpace(_value)">Save</button>
+        @if (_hasKey)
+        {
+            <button class="danger" @onclick="ClearAsync">Remove key</button>
+        }
+        @if (_status is not null)
+        {
+            <span class="status">@_status</span>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Name { get; set; } = "";
+
+    private string _value = "";
+    private bool _hasKey;
+    private string? _status;
+
+    protected override async Task OnParametersSetAsync() =>
+        _hasKey = !string.IsNullOrEmpty(await Secrets.GetAsync(Name));
+
+    private async Task SaveAsync()
+    {
+        await Secrets.SetAsync(Name, _value);
+        _value = "";
+        _hasKey = true;
+        _status = "Saved.";
+    }
+
+    private async Task ClearAsync()
+    {
+        await Secrets.SetAsync(Name, null);
+        _hasKey = false;
+        _status = "Removed.";
+    }
+}

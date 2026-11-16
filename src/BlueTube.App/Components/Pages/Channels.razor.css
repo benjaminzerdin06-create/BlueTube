@@ -1,0 +1,76 @@
+.add {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.message {
+    margin: 12px 0 0;
+    font-size: 14px;
+    color: var(--text-dim);
+}
+
+.message.error {
+    color: var(--danger);
+}
+
+.list {
+    list-style: none;
+    margin: 20px 0 0;
+    padding: 0;
+}
+
+.list li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--surface-2);
+}
+
+.list img {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--surface);
+    flex-shrink: 0;
+}
+
+.main {
+    flex: 1;
+    min-width: 0;
+}
+
+.name {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.hint {
+    font-size: 13px;
+    color: var(--text-dim);
+}
+
+.edit {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.edit input {
+    padding: 6px 10px;
+}
+
+.remove {
+    background: transparent;
+    color: var(--text-dim);
+}
