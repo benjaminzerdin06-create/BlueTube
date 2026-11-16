@@ -4,6 +4,8 @@ Personal phone app for watching **curated, high-quality tech YouTube videos and 
 
 Claude Code writes most of this project. Follow this file strictly. Ask before deviating from the stack or structure.
 
+How-to for common tasks (add channels on the phone, add fields, change Videos/Shorts, build, install, test): [docs/AGENT-GUIDE.md](docs/AGENT-GUIDE.md).
+
 ---
 
 ## Owner context
