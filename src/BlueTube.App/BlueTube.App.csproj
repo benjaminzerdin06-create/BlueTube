@@ -18,11 +18,14 @@
         <ApplicationVersion>1</ApplicationVersion>
 
         <SupportedOSPlatformVersion>24.0</SupportedOSPlatformVersion>
+
+        <!-- Sideloaded app: build an .apk, not a Play Store .aab. -->
+        <AndroidPackageFormat>apk</AndroidPackageFormat>
     </PropertyGroup>
 
     <ItemGroup>
-        <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
-        <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
+        <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" />
+        <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#0b0f17" BaseSize="128,128" />
         <MauiFont Include="Resources\Fonts\*" />
     </ItemGroup>
 

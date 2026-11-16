@@ -1,5 +1,7 @@
 ﻿@inherits LayoutComponentBase
+@implements IDisposable
 @inject IVideoRepository Repo
+@inject NavigationManager Nav
 
 <div class="layout">
     <main class="content">
@@ -13,7 +15,17 @@
         }
         else
         {
-            @Body
+            @* A page error shows a message, not a crash. Navigating away recovers. *@
+            <ErrorBoundary @ref="_errorBoundary">
+                <ChildContent>@Body</ChildContent>
+                <ErrorContent Context="ex">
+                    <div class="state error">
+                        <p>Something went wrong.</p>
+                        <p class="detail">@ex.Message</p>
+                        <button @onclick="() => _errorBoundary?.Recover()">Try again</button>
+                    </div>
+                </ErrorContent>
+            </ErrorBoundary>
         }
     </main>
 
@@ -40,9 +52,11 @@
 @code {
     private bool _ready;
     private string? _error;
+    private ErrorBoundary? _errorBoundary;
 
     protected override async Task OnInitializedAsync()
     {
+        Nav.LocationChanged += OnLocationChanged;
         try
         {
             await Repo.InitAsync();
@@ -53,4 +67,8 @@
             _error = e.Message;
         }
     }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e) => _errorBoundary?.Recover();
+
+    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
 }

@@ -28,13 +28,25 @@ dotnet test tests/BlueTube.Tests
 dotnet workload install maui-android
 ```
 
-2. Build:
+2. Install the Android SDK and JDK (once). This accepts the Android SDK license:
 
 ```bash
-dotnet publish src/BlueTube.App -f net10.0-android -c Release
+dotnet build src/BlueTube.App -t:InstallAndroidDependencies -f net10.0-android -p:AndroidSdkDirectory="$LOCALAPPDATA/Android/Sdk" -p:JavaSdkDirectory="$LOCALAPPDATA/Microsoft/jdk" -p:AcceptAndroidSDKLicenses=True
 ```
 
-3. Copy the `.apk` from `src/BlueTube.App/bin/Release/net10.0-android/publish/` to the phone. Install it.
+3. Build:
+
+```bash
+dotnet publish src/BlueTube.App -f net10.0-android -c Release -p:JavaSdkDirectory="$LOCALAPPDATA/Microsoft/jdk"
+```
+
+4. Install `src/BlueTube.App/bin/Release/net10.0-android/publish/com.bluetube.app-Signed.apk` on the phone. USB with debugging on:
+
+```bash
+"$LOCALAPPDATA/Android/Sdk/platform-tools/adb" install -r src/BlueTube.App/bin/Release/net10.0-android/publish/com.bluetube.app-Signed.apk
+```
+
+The APK uses the debug signing key. Keep the same machine for updates, or uninstall first.
 
 ## First start
 
