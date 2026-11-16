@@ -3,7 +3,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:BlueTube.App"
              xmlns:components="clr-namespace:BlueTube.App.Components"
-             x:Class="BlueTube.App.MainPage">
+             x:Class="BlueTube.App.MainPage"
+             BackgroundColor="#0b0f17"
+             SafeAreaEdges="All">
+    <!-- SafeAreaEdges: keep the WebView out of the status bar and navigation bar. -->
 
     <BlazorWebView x:Name="blazorWebView" HostPage="wwwroot/index.html">
         <BlazorWebView.RootComponents>

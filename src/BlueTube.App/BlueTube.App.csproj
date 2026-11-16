@@ -21,6 +21,8 @@
 
         <!-- Sideloaded app: build an .apk, not a Play Store .aab. -->
         <AndroidPackageFormat>apk</AndroidPackageFormat>
+        <!-- android-arm: some phones (e.g. Galaxy A13) run 32-bit-only Android. -->
+        <RuntimeIdentifiers Condition="'$(Configuration)' == 'Release'">android-arm;android-arm64</RuntimeIdentifiers>
     </PropertyGroup>
 
     <ItemGroup>
