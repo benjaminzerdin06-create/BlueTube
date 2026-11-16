@@ -22,6 +22,14 @@
     animation: spin .8s linear infinite;
 }
 
+.chips {
+    display: flex;
+    gap: 6px;
+    padding: 0 16px 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
 .pull-indicator {
     height: var(--pull);
     overflow: hidden;

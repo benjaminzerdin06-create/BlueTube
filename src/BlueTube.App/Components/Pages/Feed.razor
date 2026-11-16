@@ -13,6 +13,12 @@
         </button>
     </header>
 
+    <div class="chips">
+        <TagChip Tag="All" Active="@(_list == FeedList.All)" OnClick="() => SelectListAsync(FeedList.All)" />
+        <TagChip Tag="Watch later" Active="@(_list == FeedList.WatchLater)" OnClick="() => SelectListAsync(FeedList.WatchLater)" />
+        <TagChip Tag="Favorites" Active="@(_list == FeedList.Favorites)" OnClick="() => SelectListAsync(FeedList.Favorites)" />
+    </div>
+
     <div class="pull-indicator">@(_refreshing ? "Refreshing…" : "Release to refresh")</div>
 
     @if (_message is not null)
@@ -31,6 +37,10 @@
                 @if (_channelCount == 0)
                 {
                     <p>No channels yet.</p>
+                }
+                else if (_list != FeedList.All)
+                {
+                    <p>List is empty.</p>
                 }
                 else
                 {
@@ -53,6 +63,7 @@
     private DotNetObjectReference<Feed>? _self;
     private IReadOnlyList<Video>? _videos;
     private int _channelCount;
+    private FeedList _list = FeedList.All;
     private bool _refreshing;
     private string? _message;
     private bool _messageIsError;
@@ -72,7 +83,14 @@
     private async Task LoadAsync()
     {
         _channelCount = (await Repo.GetChannelsAsync()).Count;
-        _videos = await FeedSvc.GetFeedAsync(new FeedFilter(IsShort: false));
+        _videos = await FeedSvc.GetFeedAsync(new FeedFilter(IsShort: false, List: _list));
+    }
+
+    private async Task SelectListAsync(FeedList list)
+    {
+        _list = list;
+        _videos = null;
+        await LoadAsync();
     }
 
     private async Task RefreshAsync()

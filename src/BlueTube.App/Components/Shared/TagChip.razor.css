@@ -1,0 +1,15 @@
+.chip {
+    display: inline-block;
+    flex-shrink: 0;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--text-dim);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.chip.active {
+    background: var(--accent);
+    color: #fff;
+}

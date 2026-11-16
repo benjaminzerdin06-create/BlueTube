@@ -1,0 +1,96 @@
+@page "/watch/{Id}"
+@inject IVideoRepository Repo
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<header class="page-header">
+    <button class="back" @onclick="BackAsync" aria-label="Back">←</button>
+</header>
+
+@if (_notFound)
+{
+    <div class="state">Video not found.</div>
+}
+else if (_video is null)
+{
+    <div class="state"><div class="spinner"></div></div>
+}
+else
+{
+    <div class="player">
+        @* Official embed. "origin" and referrer policy prevent error 152/153 in the WebView. *@
+        <iframe src="@EmbedUrl"
+                title="@_video.Title"
+                allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen></iframe>
+    </div>
+
+    <div class="page-body">
+        <h2 class="title">@_video.Title</h2>
+        <div class="sub">@_video.ChannelTitle · @Formatting.Age(_video.PublishedAt, DateTime.UtcNow)</div>
+
+        <div class="actions">
+            <button class="@(_video.Watched ? "on" : "")" @onclick="() => ToggleAsync(v => v.Watched = !v.Watched)">✓ Watched</button>
+            <button class="@(_video.WatchLater ? "on" : "")" @onclick="() => ToggleAsync(v => v.WatchLater = !v.WatchLater)">⏱ Later</button>
+            <button class="@(_video.Favorite ? "on" : "")" @onclick="() => ToggleAsync(v => v.Favorite = !v.Favorite)">★ Favorite</button>
+            <button @onclick="OpenInYouTubeAsync">↗ YouTube</button>
+        </div>
+
+        @if (_video.AiTagList.Count > 0)
+        {
+            <div class="tags">
+                @foreach (var tag in _video.AiTagList)
+                {
+                    <TagChip Tag="@tag" />
+                }
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(_video.Description))
+        {
+            <p class="description @(_expanded ? "expanded" : "")" @onclick="() => _expanded = !_expanded">@_video.Description</p>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string Id { get; set; } = "";
+
+    private Video? _video;
+    private bool _notFound;
+    private bool _expanded;
+
+    private string Origin => new Uri(Nav.BaseUri).GetLeftPart(UriPartial.Authority);
+
+    private string EmbedUrl =>
+        $"https://www.youtube.com/embed/{Uri.EscapeDataString(Id)}?autoplay=1&playsinline=1&rel=0&modestbranding=1"
+        + $"&origin={Uri.EscapeDataString(Origin)}&widget_referrer={Uri.EscapeDataString(Origin)}";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _video = await Repo.GetVideoAsync(Id);
+        _notFound = _video is null;
+    }
+
+    private async Task ToggleAsync(Action<Video> change)
+    {
+        if (_video is null) return;
+        change(_video);
+        await Repo.UpdateVideoAsync(_video);
+    }
+
+    private async Task OpenInYouTubeAsync()
+    {
+        try
+        {
+            await Launcher.Default.OpenAsync($"https://www.youtube.com/watch?v={Uri.EscapeDataString(Id)}");
+        }
+        catch (Exception)
+        {
+            // No app can open the link. Nothing to do.
+        }
+    }
+
+    private async Task BackAsync() => await JS.InvokeVoidAsync("history.back");
+}

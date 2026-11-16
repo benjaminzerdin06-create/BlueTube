@@ -1,0 +1,14 @@
+@if (OnClick.HasDelegate)
+{
+    <button class="chip @(Active ? "active" : "")" @onclick="OnClick">@Tag</button>
+}
+else
+{
+    <span class="chip">@Tag</span>
+}
+
+@code {
+    [Parameter, EditorRequired] public string Tag { get; set; } = "";
+    [Parameter] public bool Active { get; set; }
+    [Parameter] public EventCallback OnClick { get; set; }
+}
