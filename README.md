@@ -109,6 +109,12 @@ The APK uses the debug signing key. Keep the same machine for updates, or uninst
 3. Open **Channels**. Add channels by `@handle`, `UC...` ID or channel URL.
 4. Open **Feed**. Tap ⟳ (phone: or pull down).
 
+## Learning library
+
+**Channels → Learning library → Add library** adds 55 hand-picked channels: AI & ML engineering, full stack & system design, robotics & electronics, game development, business (proven builders), C++ & CS fundamentals, tech news. Each channel shows why it is in the list.
+
+Every entry was checked against YouTube: name and permanent channel ID. Add library uses the stored IDs, so it costs no YouTube quota. List: `src/BlueTube.Core/LearningLibrary.cs`.
+
 ## Copy channels between phone and PC
 
 1. On one device: **Channels → Export / import channels → Copy**.

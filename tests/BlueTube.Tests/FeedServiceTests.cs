@@ -154,6 +154,23 @@ public class FeedServiceTests
         Assert.That(shorts.Select(v => v.Id), Is.EqualTo(new[] { "s" }));
     }
 
+    [Test]
+    public async Task GetFeed_TagFindsOlderVideos_BeyondFeedLimit()
+    {
+        // 300 new untagged videos, then 5 old videos from a robotics channel.
+        _repo.Channels["UCr"] = new Channel { Id = "UCr", Title = "Robots", Tags = "robotics" };
+        for (var i = 0; i < 300; i++)
+            _repo.Videos[$"n{i}"] = new Video { Id = $"n{i}", ChannelId = "UC1", PublishedAt = new DateTime(2026, 6, 1).AddMinutes(i) };
+        for (var i = 0; i < 5; i++)
+            _repo.Videos[$"r{i}"] = new Video { Id = $"r{i}", ChannelId = "UCr", PublishedAt = new DateTime(2025, 1, 1).AddDays(i) };
+
+        var all = await _feed.GetFeedAsync(new FeedFilter(IsShort: false));
+        var robotics = await _feed.GetFeedAsync(new FeedFilter(IsShort: false, Tag: "robotics"));
+
+        Assert.That(all, Has.Count.EqualTo(FeedService.FeedLimit));
+        Assert.That(robotics.Select(v => v.Id), Is.EquivalentTo(new[] { "r0", "r1", "r2", "r3", "r4" }));
+    }
+
     [TestCase(0, "")]
     [TestCase(65, "1:05")]
     [TestCase(3723, "1:02:03")]

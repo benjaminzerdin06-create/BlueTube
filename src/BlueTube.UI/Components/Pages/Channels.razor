@@ -19,6 +19,29 @@
         <p class="message @(_messageIsError ? "error" : "")">@_message</p>
     }
 
+    @* Curated channel list (Core/LearningLibrary.cs). One tap adds all. *@
+    <details class="library">
+        <summary>Learning library · @LearningLibrary.Channels.Count channels</summary>
+        <p class="hint">Hand-picked channels for your goals. A channel is added only if YouTube confirms its name.</p>
+        @foreach (var topic in LearningLibrary.Topics)
+        {
+            <h4>@topic</h4>
+            <ul class="lib-list">
+                @foreach (var e in LearningLibrary.Channels.Where(c => c.Topic == topic))
+                {
+                    <li><b>@e.Name</b> <span class="why">@e.Why</span></li>
+                }
+            </ul>
+        }
+        <button class="primary" @onclick="AddLibraryAsync" disabled="@_busy">
+            @(_busy ? "Adding library…" : "Add library")
+        </button>
+        @if (_libraryReport is not null)
+        {
+            <p class="report">@_libraryReport</p>
+        }
+    </details>
+
     @if (_channels is null)
     {
         <div class="state"><div class="spinner"></div></div>
@@ -91,6 +114,31 @@
 
 @code {
     private string _transferText = "";
+    private string? _libraryReport;
+
+    private async Task AddLibraryAsync()
+    {
+        _busy = true;
+        _libraryReport = null;
+        try
+        {
+            var r = await Feed.AddLibraryAsync(LearningLibrary.Channels);
+            var lines = new List<string> { $"Added {r.Added.Count}. Already there: {r.AlreadyThere.Count}." };
+            if (r.NotFound.Count > 0) lines.Add("Not found: " + string.Join(", ", r.NotFound));
+            if (r.Mismatch.Count > 0) lines.Add("Refused (name mismatch): " + string.Join("; ", r.Mismatch));
+            lines.Add("Refresh the feed to get videos.");
+            _libraryReport = string.Join("\n", lines);
+            await LoadAsync();
+        }
+        catch (Exception e)
+        {
+            _libraryReport = ErrorText.For(e);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
     private IReadOnlyList<Channel>? _channels;
     private string _input = "";
     private string _tags = "";

@@ -116,3 +116,44 @@
     background: var(--accent-dim);
     font-weight: 600;
 }
+
+.library {
+    margin-top: 20px;
+    padding: 12px;
+    border-radius: var(--radius);
+    background: var(--surface);
+}
+
+.library summary {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.library h4 {
+    margin: 14px 0 6px;
+    font-size: 14px;
+    color: var(--accent);
+}
+
+.lib-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.lib-list .why {
+    color: var(--text-dim);
+}
+
+.library button {
+    margin-top: 14px;
+    width: 100%;
+}
+
+.report {
+    white-space: pre-line;
+    font-size: 13px;
+    color: var(--text-dim);
+}

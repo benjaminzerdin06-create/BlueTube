@@ -363,6 +363,52 @@ Channel export/import (`ChannelTransfer`): the JSON has `id`, `title`, `thumbnai
 
 ---
 
+## 9b. Learning library (curated channels)
+
+File: `src/BlueTube.Core/LearningLibrary.cs`. UI: Channels → "Learning library" → **Add library**. Logic: `FeedService.AddLibraryAsync`. Tests: `LearningLibraryTests`.
+
+### The owner's profile (from a 4-round interview, 2026-11-16)
+
+| Item | Answer |
+|---|---|
+| Priority topics | ML/AI engineering; full stack + system design; robotics + electronics; game dev; business (proven builders); C++ |
+| Not priority now | Math (only where it serves ML/robotics), DevOps |
+| Formats | Deep-dive explainers; news + short tips. **Not** long courses, **not** build-along series |
+| Level | Intermediate programmer (C#, Unity) |
+| Time | 2+ h/day → large library (~55 channels) |
+| AI focus | Build AI apps + agents; how ML works; local models; computer vision |
+| Web stack | .NET backend; Python backend; system design. **Not** JavaScript-first |
+| Robotics | Hobby builds; control + autonomy (ROS 2, PID); drones + hardware products |
+| Game dev | Unity + C#; game design + game business. **Not** own engine, Godot, Unreal |
+| C++ | Modern C++; embedded C/C++; CS fundamentals |
+| Business | **Proven builders only**: real products, real numbers. No get-rich-quick, no passive-income hype |
+| Language | English only |
+| AI filter | Off for now (no Claude key). Wanted: strict (hide < 60) once a key exists. Shorts: filtered |
+
+### Rules for an entry
+
+- Teaches deeply and accurately, or news with real analysis. Fits the profile above.
+- Business: the creator shows their own real products/revenue. Reject hype and course-sellers.
+- `Tags`: only names from `LlmQualityFilter.AllowedTags` (a test checks this).
+- `Name`: the **exact current YouTube title** (brands rename: GDC is now "GDC Festival of Gaming").
+- `Id`: required (a test checks this). Get it by verification, never from memory.
+
+### Add or change a channel
+
+1. Add the entry **without** `Id`. Find the handle on youtube.com, not from memory (`@GDC` and `@marclou` are impostors; real: `@GDCFestivalofGaming`, `@marc-lou`).
+2. Tests fail (missing Id): expected. Build and run the desktop app with a **test** data folder and a YouTube key the owner has entered, or ask the owner.
+3. Channels → Add library. Read the report: *Not found* = wrong handle. *Refused (name mismatch)* = wrong channel or renamed brand: check on youtube.com, fix `Name` or `Handle`.
+4. Copy the ID from Channels → Export / import (JSON `id`). Put it as the 6th argument. Tests pass.
+5. On devices, "Add library" with IDs needs no API call and costs no quota. It never removes channels.
+
+To drop a channel, remove the entry and add it to `LearningLibrary.Dropped` with a reason. Users remove it on each device with ✕ (Add library does not delete).
+
+### Feed size
+
+The feed reads up to 20,000 rows, filters (score, tag), then shows the newest 200 (`FeedService.FeedLimit`). Filter first, limit second: else a tag misses older videos.
+
+---
+
 ## 10. Blazor pitfalls found in this project
 
 | Problem | Cause | Fix |

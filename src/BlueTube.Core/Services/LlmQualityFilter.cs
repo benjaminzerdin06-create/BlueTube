@@ -18,24 +18,43 @@ public sealed class LlmQualityFilter(HttpClient http, ISecretStore secrets, IApp
     /// <summary>Score when every model declines the request. Neutral: visible at default threshold.</summary>
     public const int DeclinedScore = 50;
 
+    /// <summary>Same names as the channel tags in LearningLibrary, so feed chips merge.</summary>
     public static readonly IReadOnlyList<string> AllowedTags =
     [
-        "unity", "csharp", "dotnet", "gamedev", "graphics", "ai-ml", "hardware", "webdev",
-        "programming", "devops", "security", "mobile", "linux", "tools", "career", "news",
-        "review", "tutorial", "deep-dive",
+        // AI & ML
+        "ai-ml", "agents", "local-ai", "computer-vision",
+        // Full stack
+        "backend", "system-design", "architecture", "dotnet", "csharp", "python", "webdev",
+        // Robotics & electronics
+        "robotics", "electronics", "embedded", "control", "ros2", "drones", "hardware",
+        // Game dev
+        "unity", "gamedev", "game-design", "game-business", "graphics",
+        // C++ & fundamentals
+        "cpp", "c", "performance", "cs-fundamentals", "algorithms",
+        // Business
+        "business", "startups", "indie", "product",
+        // Other
+        "math", "programming", "devops", "security", "tools", "career", "news", "tutorial", "deep-dive",
     ];
 
     private const string SystemPrompt =
         """
-        You rate YouTube tech videos for one viewer: a C# and Unity developer who wants high-signal content.
+        You rate YouTube videos for one viewer. Profile:
+        - Intermediate programmer (C#, Unity; learning Python and C++). Learns from deep-dive explainers and substantive news.
+        - Goal: become an engineer who turns ideas into products, and build companies in games, software, AI and robotics.
+        - Topics: ML and AI engineering (how models work, building AI apps and agents, local models, computer vision);
+          full stack (.NET and Python backends, system design); robotics, electronics, embedded, control, drones;
+          Unity game development, game design and the game business; modern C++, embedded C, CS fundamentals;
+          business from proven builders (real products, real numbers).
         You get the title, channel and description. Give a score from 0 to 100 and 1 to 4 tags.
 
         Score guide:
-        - 80-100: deep, accurate, teaches something real (tutorials, deep dives, expert talks, honest reviews).
-        - 50-79: useful but light, or news with some substance.
-        - 20-49: mostly hype, reaction, or thin content.
-        - 0-19: clickbait, drama, misleading, or not about tech.
-        Clickbait title alone does not mean low score if the description shows real content.
+        - 80-100: deep, accurate, teaches something real on the topics above (deep dives, expert talks, honest build logs
+          and postmortems with real numbers).
+        - 60-79: useful but lighter: good overviews, news with real analysis, practical tips.
+        - 30-59: thin, generic, beginner-only basics, opinion without substance, or off-topic but harmless.
+        - 0-29: hype, "get rich quick", passive-income promises, drama, reaction, clickbait, sponsorship-only content.
+        A clickbait title alone does not mean a low score if the description shows real content.
         Use only tags from the allowed list. Pick the most specific ones.
         """;
 

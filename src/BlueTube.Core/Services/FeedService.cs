@@ -20,6 +20,14 @@ public record RefreshResult(int Added, IReadOnlyList<string> ChannelErrors, YouT
 /// <param name="Error">Set if scoring stopped early (bad key, rate limit, offline).</param>
 public record ScoreResult(int Scored, bool Skipped, QualityFilterException? Error);
 
+/// <param name="NotFound">Handle unknown to YouTube.</param>
+/// <param name="Mismatch">Handle exists, but the title is not the expected channel. Not added.</param>
+public record LibraryResult(
+    IReadOnlyList<string> Added,
+    IReadOnlyList<string> AlreadyThere,
+    IReadOnlyList<string> NotFound,
+    IReadOnlyList<string> Mismatch);
+
 /// <summary>Fetch, dedupe, store, score. Also reads the feed with filters.</summary>
 public sealed class FeedService(IYouTubeService youTube, IVideoRepository repo, IQualityFilter quality)
 {
@@ -125,6 +133,58 @@ public sealed class FeedService(IYouTubeService youTube, IVideoRepository repo, 
         return channel;
     }
 
+    /// <summary>
+    /// Adds library channels. Entry with a verified ID: no API call. Else: resolve the handle (1 quota unit)
+    /// and refuse it if the returned title does not match the expected name (impostor or wrong handle).
+    /// Channels already stored keep their data; library tags are merged.
+    /// </summary>
+    public async Task<LibraryResult> AddLibraryAsync(IEnumerable<LibraryChannel> entries, CancellationToken ct = default)
+    {
+        var added = new List<string>();
+        var already = new List<string>();
+        var notFound = new List<string>();
+        var mismatch = new List<string>();
+        var stored = (await repo.GetChannelsAsync(ct)).ToDictionary(c => c.Id);
+
+        foreach (var e in entries)
+        {
+            Channel channel;
+            if (e.Id is not null)
+            {
+                channel = new Channel { Id = e.Id, Title = e.Name };
+            }
+            else
+            {
+                var resolved = await youTube.ResolveChannelAsync(e.Handle, ct);
+                if (resolved is null)
+                {
+                    notFound.Add($"{e.Name} ({e.Handle})");
+                    continue;
+                }
+                if (!LearningLibrary.NameMatches(e.Name, resolved.Title))
+                {
+                    mismatch.Add($"{e.Handle}: expected \"{e.Name}\", YouTube says \"{resolved.Title}\"");
+                    continue;
+                }
+                channel = resolved;
+            }
+
+            if (stored.TryGetValue(channel.Id, out var existing))
+            {
+                existing.TagList = existing.TagList.Concat(TagHelper.Parse(e.Tags)).ToList();
+                await repo.UpsertChannelAsync(existing, ct);
+                already.Add(existing.Title);
+                continue;
+            }
+
+            channel.TagList = TagHelper.Parse(e.Tags);
+            await repo.UpsertChannelAsync(channel, ct);
+            stored[channel.Id] = channel;
+            added.Add(channel.Title);
+        }
+        return new LibraryResult(added, already, notFound, mismatch);
+    }
+
     public async Task<string> ExportChannelsAsync(CancellationToken ct = default) =>
         ChannelTransfer.Export(await repo.GetChannelsAsync(ct));
 
@@ -154,17 +214,24 @@ public sealed class FeedService(IYouTubeService youTube, IVideoRepository repo, 
         return added;
     }
 
+    /// <summary>Max videos the feed shows. Filters run before this limit, so a tag finds older videos too.</summary>
+    public const int FeedLimit = 200;
+
+    /// <summary>Rows read before score/tag filtering. Large: the library has thousands of videos.</summary>
+    private const int FilterWindow = 20_000;
+
     public async Task<IReadOnlyList<Video>> GetFeedAsync(FeedFilter filter, CancellationToken ct = default)
     {
         var query = new VideoQuery(
             IsShort: filter.IsShort,
             Watched: filter.HideWatched ? false : null,
             WatchLater: filter.List == FeedList.WatchLater ? true : null,
-            Favorite: filter.List == FeedList.Favorites ? true : null);
+            Favorite: filter.List == FeedList.Favorites ? true : null,
+            Limit: FilterWindow);
 
         var videos = await repo.GetVideosAsync(query, ct);
         var channelTags = (await repo.GetChannelsAsync(ct)).ToDictionary(c => c.Id, c => c.TagList);
-        return Apply(videos, filter, channelTags);
+        return Apply(videos, filter, channelTags).Take(FeedLimit).ToList();
     }
 
     /// <summary>Score threshold and tag filter. Saved lists (watch later, favorites) ignore the threshold.</summary>
