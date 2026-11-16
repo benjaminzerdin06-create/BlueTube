@@ -7,6 +7,9 @@
     <Nullable>enable</Nullable>
     <AssemblyName>BlueTube</AssemblyName>
     <RootNamespace>BlueTube.Desktop</RootNamespace>
+    <!-- Windows: GUI app, no console window. The server runs hidden and stops 30 s after the last window closes.
+         Linux: no effect (same as Exe). -->
+    <OutputType>WinExe</OutputType>
     <!-- Windows: icon of BlueTube.exe (Explorer, taskbar, shortcuts). 16-256 px. -->
     <ApplicationIcon>bluetube.ico</ApplicationIcon>
   </PropertyGroup>

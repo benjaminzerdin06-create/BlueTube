@@ -342,7 +342,8 @@ Host: `src/BlueTube.Desktop`. It shows the **same** pages as the phone (from `Bl
 
 | Task | What to do |
 |---|---|
-| Run from source (test data, no window) | `dotnet run --project src/BlueTube.Desktop -- --no-window --data <scratch folder>`. Then open `http://127.0.0.1:5217` in the built-in browser pane. Stop: kill the process on port 5217. |
+| Run from source (test data, no window) | `dotnet run --project src/BlueTube.Desktop -- --no-window --data <scratch folder>`. Then open `http://127.0.0.1:5217` in the built-in browser pane. Stop: kill the process on port 5217. The app is `WinExe` (no console): read `<data folder>/bluetube.log`, not stdout. |
+| Port 5217 busy | The owner may be running BlueTube. Then your test copy exits at once and your requests reach the owner's copy (real data). Check the process path on port 5217 first. Publish to a new folder if `artifacts/desktop/win-x64` is locked. |
 | Run with a window | `dotnet run --project src/BlueTube.Desktop`. Opens Edge/Chrome in `--app` mode. **Uses the owner's real desktop data** (`%LOCALAPPDATA%\BlueTube`). |
 | Publish | `dotnet publish src/BlueTube.Desktop -c Release -r win-x64 --self-contained -o artifacts/desktop/win-x64` (also `linux-x64`). `artifacts/` is git-ignored. |
 | Check a publish | Start `BlueTube.exe --no-window --data <folder>`. Get `/`, `/_framework/blazor.web.js`, `/_content/BlueTube.UI/app.css` → all 200. |

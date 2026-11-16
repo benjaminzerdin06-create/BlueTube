@@ -15,7 +15,6 @@ var dataArg = Array.IndexOf(args, "--data");
 if (AppWindow.IsPortInUse(Port))
 {
     if (openWindow) AppWindow.Open(url);
-    else Console.WriteLine($"Port {Port} is in use. BlueTube may already run.");
     return;
 }
 
@@ -27,7 +26,17 @@ var dataDir = dataArg >= 0 && dataArg + 1 < args.Length
         "BlueTube");
 Directory.CreateDirectory(dataDir);
 
-var builder = WebApplication.CreateBuilder(args);
+// No console window on Windows (WinExe). Startup messages and fatal errors go to bluetube.log.
+var logPath = Path.Combine(dataDir, "bluetube.log");
+void Log(string message) =>
+    File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {message}{Environment.NewLine}");
+
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args,
+    // Find wwwroot next to the executable, also when a shortcut starts BlueTube from another folder.
+    ContentRootPath = AppContext.BaseDirectory,
+});
 // Serve BlueTube.UI files (_content/...) also when started with "dotnet run" outside Development.
 // Published builds copy the files to wwwroot; then this call does nothing.
 builder.WebHost.UseStaticWebAssets();
@@ -58,10 +67,17 @@ app.MapRazorComponents<App>()
 
 app.Lifetime.ApplicationStarted.Register(() =>
 {
-    Console.WriteLine($"BlueTube runs at {url}");
-    Console.WriteLine($"Data: {dataDir}");
-    Console.WriteLine("It stops 30 s after you close the last BlueTube window.");
+    Log($"Started at {url}. Stops 30 s after the last BlueTube window closes.");
     if (openWindow) AppWindow.Open(url);
 });
+app.Lifetime.ApplicationStopped.Register(() => Log("Stopped."));
 
-app.Run();
+try
+{
+    app.Run();
+}
+catch (Exception e)
+{
+    Log($"Fatal error: {e}");
+    throw;
+}

@@ -57,8 +57,10 @@ Categories=AudioVideo;Video;
 
 BlueTube opens in an app window (Edge or Chrome app mode). If neither is installed, it opens in your default browser.
 
+- No console window. The server runs hidden in the background.
 - Address: `http://127.0.0.1:5217`. Only your own computer can open it.
-- It stops 30 s after you close the last BlueTube window.
+- It stops 30 s after you close the last BlueTube window. To stop it at once: Task Manager → BlueTube → End task.
+- Start and error messages go to `bluetube.log` in the data folder.
 - Start it again while it runs: it only opens the window.
 
 ### Data
