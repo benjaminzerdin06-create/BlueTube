@@ -6,7 +6,7 @@
 
 <div class="page-body">
     <form class="add" @onsubmit="AddAsync">
-        <input placeholder="@@handle, UC... ID or channel URL" @bind="_input" disabled="@_busy" />
+        <input placeholder="@@handle, UC... ID or channel URL" @bind="_input" @bind:event="oninput" disabled="@_busy" />
         <input placeholder="Tags, comma-separated (optional)" @bind="_tags" disabled="@_busy" />
         <button class="primary" type="submit" disabled="@(_busy || string.IsNullOrWhiteSpace(_input))">
             @(_busy ? "Adding…" : "Add channel")
