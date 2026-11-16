@@ -68,7 +68,7 @@ tests/
 
 **Rules**
 - `BlueTube.Core` and `BlueTube.UI` must never reference MAUI. Both build on Linux.
-- No MAUI APIs (`Launcher`, `FileSystem`, `Preferences`, ...) in `BlueTube.UI`. Put platform code behind a Core interface, implement it in each host.
+- No MAUI APIs (`Launcher`, `FileSystem`, `Preferences`, ...) in `BlueTube.UI`. Put platform code behind a Core interface, implement it in each host (example: `ILinkOpener`).
 - `.razor` files contain UI and minimal glue. Business logic goes in Core services.
 - Every service has an interface. Register it in **both** `src/BlueTube.App/MauiProgram.cs` and `src/BlueTube.Desktop/Program.cs`.
 - Each component may have a scoped `Component.razor.css`. Global styles in `BlueTube.UI/wwwroot/app.css`.

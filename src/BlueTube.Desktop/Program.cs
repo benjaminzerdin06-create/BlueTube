@@ -42,6 +42,7 @@ var store = new JsonFileSettingsStore(Path.Combine(dataDir, "settings.json"));
 builder.Services.AddSingleton(new HttpClient { Timeout = TimeSpan.FromSeconds(60) });
 builder.Services.AddSingleton<ISecretStore>(store);
 builder.Services.AddSingleton<IAppSettings>(store);
+builder.Services.AddSingleton<ILinkOpener, ShellLinkOpener>();
 builder.Services.AddSingleton<IVideoRepository>(new SqliteVideoRepository(Path.Combine(dataDir, "bluetube.db")));
 builder.Services.AddSingleton<IYouTubeService, YouTubeService>();
 builder.Services.AddSingleton<IQualityFilter, LlmQualityFilter>();

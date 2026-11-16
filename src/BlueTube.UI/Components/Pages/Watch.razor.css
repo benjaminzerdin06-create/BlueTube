@@ -37,8 +37,7 @@
     overflow-x: auto;
 }
 
-.actions button,
-.actions a.button {
+.actions button {
     flex-shrink: 0;
     font-size: 13px;
     padding: 8px 12px;

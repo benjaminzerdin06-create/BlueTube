@@ -2,6 +2,7 @@
 @inject IVideoRepository Repo
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject ILinkOpener Links
 
 <header class="page-header">
     <button class="back" @onclick="BackAsync" aria-label="Back">←</button>
@@ -34,8 +35,7 @@ else
             <button class="@(_video.Watched ? "on" : "")" @onclick="() => ToggleAsync(v => v.Watched = !v.Watched)">✓ Watched</button>
             <button class="@(_video.WatchLater ? "on" : "")" @onclick="() => ToggleAsync(v => v.WatchLater = !v.WatchLater)">⏱ Later</button>
             <button class="@(_video.Favorite ? "on" : "")" @onclick="() => ToggleAsync(v => v.Favorite = !v.Favorite)">★ Favorite</button>
-            @* External link: Android WebView and desktop browser both open it outside the app. *@
-            <a class="button" href="@YouTubeUrl" target="_blank" rel="noopener">↗ YouTube</a>
+            <button @onclick="() => Links.OpenAsync(new Uri(YouTubeUrl))">↗ YouTube</button>
         </div>
 
         @if (_video.AiTagList.Count > 0)

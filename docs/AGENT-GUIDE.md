@@ -352,7 +352,7 @@ Host: `src/BlueTube.Desktop`. It shows the **same** pages as the phone (from `Bl
 
 Rules:
 
-- **No MAUI API in `BlueTube.UI`.** `Launcher`, `FileSystem`, `Preferences`, `SecureStorage`, `Platform` do not exist on desktop. Example: "Open in YouTube" is a plain `<a target="_blank">`; both hosts open it outside the app.
+- **No MAUI API in `BlueTube.UI`.** `Launcher`, `FileSystem`, `Preferences`, `SecureStorage`, `Platform` do not exist on desktop. Example: "Open in YouTube" uses `ILinkOpener` (Core). Android: `MauiLinkOpener` (MAUI Launcher, opens the YouTube app). Desktop: `ShellLinkOpener` (default browser). **Do not use `<a target="_blank">`**: the Android WebView ignores it (our `FullscreenChromeClient` replaces the Blazor chrome client).
 - Pages run with `InteractiveServerRenderMode(prerender: false)` on desktop. Do not depend on prerender.
 - Without `builder.WebHost.UseStaticWebAssets()` in `Program.cs`, `dotnet run` gives HTTP 500 for `_content/...` files. Keep it.
 - Layout must work at phone width and at desktop width. Feed cards use `.grid` (auto columns, min 300 px). Shorts use a 9:16 max-width on screens ≥ 700 px.

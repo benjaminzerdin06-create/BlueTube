@@ -23,6 +23,7 @@ public static class MauiProgram
         builder.Services.AddSingleton(new HttpClient { Timeout = TimeSpan.FromSeconds(60) });
         builder.Services.AddSingleton<ISecretStore, SecureStorageSecretStore>();
         builder.Services.AddSingleton<IAppSettings, PreferencesAppSettings>();
+        builder.Services.AddSingleton<ILinkOpener, MauiLinkOpener>();
         builder.Services.AddSingleton<IQualityFilter, LlmQualityFilter>();
         builder.Services.AddSingleton<IVideoRepository>(
             new SqliteVideoRepository(Path.Combine(FileSystem.AppDataDirectory, "bluetube.db")));
