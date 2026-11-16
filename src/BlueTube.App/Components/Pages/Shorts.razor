@@ -4,6 +4,7 @@
 @inject IVideoRepository Repo
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject IAppSettings AppSettings
 
 @if (_videos is null)
 {
@@ -40,7 +41,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         _origin = new Uri(Nav.BaseUri).GetLeftPart(UriPartial.Authority);
-        _videos = await Feed.GetFeedAsync(new FeedFilter(IsShort: true, HideWatched: true));
+        _videos = await Feed.GetFeedAsync(new FeedFilter(IsShort: true, MinScore: AppSettings.MinScore, HideWatched: true));
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

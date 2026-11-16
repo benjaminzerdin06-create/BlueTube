@@ -1,4 +1,5 @@
 @page "/settings"
+@inject IAppSettings AppSettings
 
 <header class="page-header"><h1>Settings</h1></header>
 
@@ -8,4 +9,52 @@
         <p class="help">YouTube Data API v3 key from Google Cloud Console. The app keeps it in Android secure storage.</p>
         <KeyField Name="@SecretNames.YouTubeApiKey" />
     </section>
+
+    <section>
+        <h3>Quality filter</h3>
+        <p class="help">AI scores each new video once (0-100) and adds tags. Optional: without a key, all videos show.</p>
+
+        <label class="field">
+            <span>Provider</span>
+            <select disabled>
+                <option>Claude (Anthropic)</option>
+            </select>
+        </label>
+
+        <label class="field">
+            <span>Model</span>
+            <select value="@AppSettings.LlmModel" @onchange="OnModelChange">
+                <option value="claude-opus-5-5">Claude Opus 5.5 (best)</option>
+                <option value="claude-sonnet-5-5">Claude Sonnet 5.5</option>
+                <option value="claude-haiku-5-5">Claude Haiku 5.5 (cheapest)</option>
+            </select>
+        </label>
+
+        <div class="field">
+            <span>Claude API key</span>
+            <KeyField Name="@SecretNames.LlmApiKey" />
+        </div>
+
+        <label class="field">
+            <span>Hide videos below score: <b>@_minScore</b></span>
+            <input type="range" min="0" max="100" step="5" value="@_minScore"
+                   @oninput="OnSliderInput" @onchange="OnSliderChange" />
+        </label>
+        <p class="help">0: show all. Unscored videos always show.</p>
+    </section>
 </div>
+
+@code {
+    private int _minScore;
+
+    protected override void OnInitialized() => _minScore = AppSettings.MinScore;
+
+    private void OnSliderInput(ChangeEventArgs e) => _minScore = ToInt(e);
+
+    private void OnSliderChange(ChangeEventArgs e) => AppSettings.MinScore = ToInt(e);
+
+    private void OnModelChange(ChangeEventArgs e) =>
+        AppSettings.LlmModel = e.Value?.ToString() is { Length: > 0 } m ? m : LlmQualityFilter.DefaultModel;
+
+    private static int ToInt(ChangeEventArgs e) => int.TryParse(e.Value?.ToString(), out var v) ? v : 0;
+}

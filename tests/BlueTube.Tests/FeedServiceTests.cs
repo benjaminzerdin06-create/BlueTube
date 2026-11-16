@@ -9,6 +9,7 @@ public class FeedServiceTests
 {
     private FakeYouTubeService _yt = null!;
     private FakeVideoRepository _repo = null!;
+    private FakeQualityFilter _quality = null!;
     private FeedService _feed = null!;
 
     [SetUp]
@@ -16,7 +17,8 @@ public class FeedServiceTests
     {
         _yt = new FakeYouTubeService();
         _repo = new FakeVideoRepository();
-        _feed = new FeedService(_yt, _repo);
+        _quality = new FakeQualityFilter();
+        _feed = new FeedService(_yt, _repo, _quality);
     }
 
     private static Video V(string id, int day, string channel = "UC1", int? score = null, string aiTags = "", bool isShort = false) => new()

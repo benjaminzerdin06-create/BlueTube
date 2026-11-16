@@ -38,7 +38,8 @@ public sealed class FakeVideoRepository : IVideoRepository
 
     public Task UpdateVideoAsync(Video video, CancellationToken ct = default)
     {
-        Videos[video.Id] = video;
+        // Scoring calls this in parallel.
+        lock (Videos) Videos[video.Id] = video;
         return Task.CompletedTask;
     }
 

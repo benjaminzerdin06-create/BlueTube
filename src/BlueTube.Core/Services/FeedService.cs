@@ -16,9 +16,58 @@ public record FeedFilter(
 /// <param name="Error">Set if the refresh stopped early (no key, bad key, quota, offline).</param>
 public record RefreshResult(int Added, IReadOnlyList<string> ChannelErrors, YouTubeApiException? Error);
 
-/// <summary>Fetch, dedupe, store. Also reads the feed with filters.</summary>
-public sealed class FeedService(IYouTubeService youTube, IVideoRepository repo)
+/// <param name="Skipped">True if no LLM key is set. Scoring is optional.</param>
+/// <param name="Error">Set if scoring stopped early (bad key, rate limit, offline).</param>
+public record ScoreResult(int Scored, bool Skipped, QualityFilterException? Error);
+
+/// <summary>Fetch, dedupe, store, score. Also reads the feed with filters.</summary>
+public sealed class FeedService(IYouTubeService youTube, IVideoRepository repo, IQualityFilter quality)
 {
+    private const int ScoreParallelism = 4;
+
+    /// <summary>Scores unscored videos. Each video is scored once; the result is stored.</summary>
+    public async Task<ScoreResult> ScoreNewAsync(int max = 100, CancellationToken ct = default)
+    {
+        var videos = await repo.GetUnscoredVideosAsync(max, ct);
+        var scored = 0;
+        QualityFilterException? fatal = null;
+        using var stop = CancellationTokenSource.CreateLinkedTokenSource(ct);
+
+        try
+        {
+            await Parallel.ForEachAsync(videos,
+                new ParallelOptions { MaxDegreeOfParallelism = ScoreParallelism, CancellationToken = stop.Token },
+                async (video, token) =>
+                {
+                    try
+                    {
+                        var result = await quality.ScoreAsync(video, token);
+                        video.QualityScore = result.Score;
+                        video.AiTagList = result.Tags;
+                        await repo.UpdateVideoAsync(video, token);
+                        Interlocked.Increment(ref scored);
+                    }
+                    catch (QualityFilterException e) when (e.Error == QualityFilterError.Unknown)
+                    {
+                        // One bad reply. Video stays unscored and is tried again next time.
+                    }
+                    catch (QualityFilterException e)
+                    {
+                        // Key, rate limit or network problem: the next calls fail too. Stop.
+                        Interlocked.CompareExchange(ref fatal, e, null);
+                        await stop.CancelAsync();
+                    }
+                });
+        }
+        catch (OperationCanceledException) when (fatal is not null && !ct.IsCancellationRequested)
+        {
+        }
+
+        return fatal is { Error: QualityFilterError.MissingKey }
+            ? new ScoreResult(scored, Skipped: true, Error: null)
+            : new ScoreResult(scored, Skipped: false, fatal);
+    }
+
     public async Task<RefreshResult> RefreshAsync(CancellationToken ct = default)
     {
         var added = 0;

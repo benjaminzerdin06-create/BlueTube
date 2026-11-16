@@ -8,6 +8,8 @@ public sealed class FakeHttpHandler : HttpMessageHandler
 {
     private readonly List<(string Match, HttpStatusCode Status, string Body)> _routes = [];
     public List<string> Requests { get; } = [];
+    public List<string> Bodies { get; } = [];
+    public HttpRequestMessage? LastRequest { get; private set; }
 
     public FakeHttpHandler On(string urlContains, string json, HttpStatusCode status = HttpStatusCode.OK)
     {
@@ -15,21 +17,24 @@ public sealed class FakeHttpHandler : HttpMessageHandler
         return this;
     }
 
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
     {
         var url = request.RequestUri!.ToString();
         Requests.Add(url);
+        LastRequest = request;
+        if (request.Content is not null) Bodies.Add(await request.Content.ReadAsStringAsync(ct));
+
         foreach (var (match, status, body) in _routes)
         {
             if (url.Contains(match, StringComparison.Ordinal))
-                return Task.FromResult(new HttpResponseMessage(status)
+                return new HttpResponseMessage(status)
                 {
                     Content = new StringContent(body, Encoding.UTF8, "application/json"),
-                });
+                };
         }
-        return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound)
+        return new HttpResponseMessage(HttpStatusCode.NotFound)
         {
             Content = new StringContent("""{"error":{"message":"not found","errors":[{"reason":"notFound"}]}}"""),
-        });
+        };
     }
 }

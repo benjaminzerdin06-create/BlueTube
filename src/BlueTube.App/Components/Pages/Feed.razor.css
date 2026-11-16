@@ -6,6 +6,11 @@
     flex: 1;
 }
 
+.scoring {
+    color: var(--text-dim);
+    font-size: 13px;
+}
+
 .icon {
     background: transparent;
     padding: 6px;
