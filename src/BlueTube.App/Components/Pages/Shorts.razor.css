@@ -1,0 +1,11 @@
+.shorts {
+    height: calc(100vh - var(--nav-height) - env(safe-area-inset-bottom));
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+}
+
+.shorts::-webkit-scrollbar {
+    display: none;
+}

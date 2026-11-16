@@ -1,0 +1,64 @@
+<div class="short" data-index="@Index">
+    @if (Active)
+    {
+        @* Official embed, ads included. enablejsapi: tap to pause with postMessage. *@
+        <iframe id="short-@Video.Id"
+                src="@EmbedUrl"
+                title="@Video.Title"
+                allow="autoplay; encrypted-media; picture-in-picture"
+                referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        @* Catches swipes so the list scrolls. Bottom strip stays free for YouTube controls. *@
+        <div class="touch-layer" @onclick="TogglePlayAsync"></div>
+        @if (_paused)
+        {
+            <div class="paused">▶</div>
+        }
+    }
+    else
+    {
+        <img class="poster" src="@Video.ThumbnailUrl" loading="lazy" alt="" />
+    }
+
+    <div class="info">
+        <div class="title">@Video.Title</div>
+        <div class="sub">@Video.ChannelTitle · @Formatting.Age(Video.PublishedAt, DateTime.UtcNow)</div>
+    </div>
+
+    <div class="side">
+        <button class="@(Video.Favorite ? "on" : "")" @onclick="() => Toggle(v => v.Favorite = !v.Favorite)" aria-label="Favorite">★</button>
+        <button class="@(Video.WatchLater ? "on" : "")" @onclick="() => Toggle(v => v.WatchLater = !v.WatchLater)" aria-label="Watch later">⏱</button>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Video Video { get; set; } = null!;
+    [Parameter] public int Index { get; set; }
+    [Parameter] public bool Active { get; set; }
+    [Parameter] public string Origin { get; set; } = "";
+    [Parameter] public EventCallback<Video> OnChanged { get; set; }
+
+    [Inject] private IJSRuntime JS { get; set; } = null!;
+
+    private bool _paused;
+
+    private string EmbedUrl =>
+        $"https://www.youtube.com/embed/{Uri.EscapeDataString(Video.Id)}?autoplay=1&playsinline=1&loop=1&playlist={Uri.EscapeDataString(Video.Id)}"
+        + $"&rel=0&enablejsapi=1&origin={Uri.EscapeDataString(Origin)}&widget_referrer={Uri.EscapeDataString(Origin)}";
+
+    protected override void OnParametersSet()
+    {
+        if (!Active) _paused = false;
+    }
+
+    private async Task TogglePlayAsync()
+    {
+        _paused = !_paused;
+        await JS.InvokeVoidAsync("blueTube.playerCommand", $"short-{Video.Id}", _paused ? "pauseVideo" : "playVideo");
+    }
+
+    private async Task Toggle(Action<Video> change)
+    {
+        change(Video);
+        await OnChanged.InvokeAsync(Video);
+    }
+}

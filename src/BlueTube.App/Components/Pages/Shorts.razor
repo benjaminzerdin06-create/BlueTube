@@ -1,0 +1,73 @@
+@page "/shorts"
+@implements IDisposable
+@inject FeedService Feed
+@inject IVideoRepository Repo
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+@if (_videos is null)
+{
+    <div class="state"><div class="spinner"></div></div>
+}
+else if (_videos.Count == 0)
+{
+    <div class="state">No Shorts. Refresh the feed first.</div>
+}
+else
+{
+    <div class="shorts" @ref="_container">
+        @for (var i = 0; i < _videos.Count; i++)
+        {
+            var index = i;
+            <ShortPlayer @key="_videos[index].Id"
+                         Video="_videos[index]"
+                         Index="index"
+                         Active="index == _active"
+                         Origin="@_origin"
+                         OnChanged="SaveAsync" />
+        }
+    </div>
+}
+
+@code {
+    private ElementReference _container;
+    private DotNetObjectReference<Shorts>? _self;
+    private IReadOnlyList<Video>? _videos;
+    private int _active;
+    private bool _observing;
+    private string _origin = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _origin = new Uri(Nav.BaseUri).GetLeftPart(UriPartial.Authority);
+        _videos = await Feed.GetFeedAsync(new FeedFilter(IsShort: true, HideWatched: true));
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_observing || _videos is not { Count: > 0 }) return;
+        _observing = true;
+        _self = DotNetObjectReference.Create(this);
+        await JS.InvokeVoidAsync("blueTube.observeShorts", _container, _self);
+    }
+
+    /// <summary>JS calls this when a Short fills most of the screen.</summary>
+    [JSInvokable]
+    public Task OnActive(int index) => InvokeAsync(async () =>
+    {
+        if (index == _active || _videos is null) return;
+        // Leaving a Short counts as watched.
+        var previous = _videos[_active];
+        if (!previous.Watched)
+        {
+            previous.Watched = true;
+            await Repo.UpdateVideoAsync(previous);
+        }
+        _active = index;
+        StateHasChanged();
+    });
+
+    private Task SaveAsync(Video video) => Repo.UpdateVideoAsync(video);
+
+    public void Dispose() => _self?.Dispose();
+}

@@ -1,0 +1,78 @@
+.short {
+    position: relative;
+    height: 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    background: #000;
+    overflow: hidden;
+}
+
+.short iframe,
+.poster {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    object-fit: cover;
+}
+
+.touch-layer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 22%;
+}
+
+.paused {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 56px;
+    opacity: .8;
+    pointer-events: none;
+}
+
+.info {
+    position: absolute;
+    left: 14px;
+    right: 70px;
+    bottom: 24%;
+    pointer-events: none;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, .9);
+}
+
+.title {
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.sub {
+    margin-top: 4px;
+    font-size: 13px;
+    color: #d1d5db;
+}
+
+.side {
+    position: absolute;
+    right: 10px;
+    bottom: 24%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.side button {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    padding: 0;
+    font-size: 20px;
+    background: rgba(0, 0, 0, .45);
+}
+
+.side button.on {
+    background: var(--accent);
+}
