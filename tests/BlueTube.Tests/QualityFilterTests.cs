@@ -166,7 +166,8 @@ public class ScoringTests
         var result = await _feed.ScoreNewAsync();
 
         Assert.That(result.Error!.Error, Is.EqualTo(QualityFilterError.InvalidKey));
-        Assert.That(_quality.Calls, Has.Count.LessThan(10), "Must stop early, not call for every video.");
+        // At most one call per parallel worker (4). No new calls after the first fatal error.
+        Assert.That(_quality.Calls, Has.Count.LessThanOrEqualTo(4), "Must stop early, not call for every video.");
     }
 
     [Test]

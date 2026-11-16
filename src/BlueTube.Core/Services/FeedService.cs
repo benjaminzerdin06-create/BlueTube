@@ -39,6 +39,8 @@ public sealed class FeedService(IYouTubeService youTube, IVideoRepository repo, 
                 new ParallelOptions { MaxDegreeOfParallelism = ScoreParallelism, CancellationToken = stop.Token },
                 async (video, token) =>
                 {
+                    // A fatal error already happened: do not call the API again.
+                    if (Volatile.Read(ref fatal) is not null) return;
                     try
                     {
                         var result = await quality.ScoreAsync(video, token);
