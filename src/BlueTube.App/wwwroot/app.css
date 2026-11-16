@@ -1,0 +1,118 @@
+/* Global styles. Component styles: Component.razor.css. */
+
+:root {
+    --bg: #0b0f17;
+    --surface: #151b26;
+    --surface-2: #1e2633;
+    --text: #e8ecf3;
+    --text-dim: #8f9bb0;
+    --accent: #3b82f6;
+    --accent-dim: #1e3a6b;
+    --danger: #ef4444;
+    --radius: 12px;
+    --nav-height: 60px;
+    --maui-status-bar-safe-area-background: var(--bg);
+    color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
+}
+
+a { color: var(--accent); text-decoration: none; }
+h1, h2, h3 { margin: 0; font-weight: 600; }
+h1:focus { outline: none; }
+
+button {
+    font: inherit;
+    color: inherit;
+    background: var(--surface-2);
+    border: none;
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    cursor: pointer;
+}
+button.primary { background: var(--accent); color: #fff; }
+button.danger { background: transparent; color: var(--danger); }
+button:disabled { opacity: .5; }
+
+input, select {
+    font: inherit;
+    color: var(--text);
+    background: var(--surface-2);
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    width: 100%;
+}
+input:focus, select:focus { outline: none; border-color: var(--accent); }
+
+.page-header {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--bg);
+}
+
+.page-body { padding: 0 16px 16px; }
+
+.state {
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--text-dim);
+}
+.state.error { color: var(--danger); }
+
+.spinner {
+    width: 28px;
+    height: 28px;
+    margin: 0 auto 12px;
+    border: 3px solid var(--surface-2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#blazor-error-ui {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    padding: 12px 20px;
+    background: var(--danger);
+    color: #fff;
+}
+#blazor-error-ui .dismiss { position: absolute; right: 12px; top: 10px; cursor: pointer; }
+#blazor-error-ui .reload { color: #fff; text-decoration: underline; }
+
+.blazor-error-boundary { padding: 16px; background: var(--danger); color: #fff; }
+.blazor-error-boundary::after { content: "Error. Go back and try again."; }
+
+.status-bar-safe-area { display: none; }
+@supports (-webkit-touch-callout: none) {
+    .status-bar-safe-area {
+        display: flex;
+        position: sticky;
+        top: 0;
+        height: env(safe-area-inset-top);
+        background-color: var(--maui-status-bar-safe-area-background);
+        width: 100%;
+        z-index: 1;
+    }
+}
