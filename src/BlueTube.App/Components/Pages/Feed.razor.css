@@ -1,0 +1,47 @@
+.feed {
+    --pull: 0px;
+}
+
+.grow {
+    flex: 1;
+}
+
+.icon {
+    background: transparent;
+    padding: 6px;
+    line-height: 0;
+}
+
+.icon svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--text);
+}
+
+.spin {
+    animation: spin .8s linear infinite;
+}
+
+.pull-indicator {
+    height: var(--pull);
+    overflow: hidden;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 13px;
+    line-height: var(--pull);
+    transition: height .15s;
+}
+
+.banner {
+    margin: 0 16px 12px;
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    background: var(--accent-dim);
+    white-space: pre-line;
+    font-size: 14px;
+}
+
+.banner.error {
+    background: rgba(239, 68, 68, .15);
+    color: #fca5a5;
+}

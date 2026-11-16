@@ -1,3 +1,41 @@
-.page {
+.layout {
     min-height: 100vh;
+}
+
+.content {
+    padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom));
+}
+
+.tabs {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    display: flex;
+    height: calc(var(--nav-height) + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    background: var(--surface);
+    border-top: 1px solid var(--surface-2);
+}
+
+.tabs ::deep a {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    color: var(--text-dim);
+    font-size: 11px;
+}
+
+.tabs ::deep a.active {
+    color: var(--accent);
+}
+
+.tabs ::deep svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
 }

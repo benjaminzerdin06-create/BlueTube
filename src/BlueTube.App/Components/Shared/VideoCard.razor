@@ -1,0 +1,26 @@
+<a class="card @(Video.Watched ? "watched" : "")" href="watch/@Video.Id">
+    <div class="thumb">
+        <img src="@Video.ThumbnailUrl" loading="lazy" alt="" />
+        @if (Video.DurationSeconds > 0)
+        {
+            <span class="duration">@Formatting.Duration(Video.DurationSeconds)</span>
+        }
+    </div>
+    <div class="meta">
+        <div class="title">@Video.Title</div>
+        <div class="sub">
+            <span>@Video.ChannelTitle</span>
+            <span>· @Formatting.Age(Video.PublishedAt, DateTime.UtcNow)</span>
+            @if (Video.QualityScore is { } score)
+            {
+                <span class="score">· @score</span>
+            }
+            @if (Video.Favorite) { <span class="flag">★</span> }
+            @if (Video.WatchLater) { <span class="flag">⏱</span> }
+        </div>
+    </div>
+</a>
+
+@code {
+    [Parameter, EditorRequired] public Video Video { get; set; } = null!;
+}

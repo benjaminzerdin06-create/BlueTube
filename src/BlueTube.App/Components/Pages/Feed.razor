@@ -1,0 +1,113 @@
+@page "/"
+@implements IDisposable
+@inject FeedService FeedSvc
+@inject IVideoRepository Repo
+@inject IJSRuntime JS
+
+<div class="feed" @ref="_root">
+    <header class="page-header">
+        <h1>BlueTube</h1>
+        <span class="grow"></span>
+        <button class="icon" @onclick="RefreshAsync" disabled="@_refreshing" aria-label="Refresh">
+            <svg class="@(_refreshing ? "spin" : "")" viewBox="0 0 24 24"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4z" /></svg>
+        </button>
+    </header>
+
+    <div class="pull-indicator">@(_refreshing ? "Refreshing…" : "Release to refresh")</div>
+
+    @if (_message is not null)
+    {
+        <div class="banner @(_messageIsError ? "error" : "")" @onclick="() => _message = null">@_message</div>
+    }
+
+    <div class="page-body">
+        @if (_videos is null)
+        {
+            <div class="state"><div class="spinner"></div></div>
+        }
+        else if (_videos.Count == 0)
+        {
+            <div class="state">
+                @if (_channelCount == 0)
+                {
+                    <p>No channels yet.</p>
+                }
+                else
+                {
+                    <p>No videos. Pull down to refresh.</p>
+                }
+            </div>
+        }
+        else
+        {
+            @foreach (var v in _videos)
+            {
+                <VideoCard @key="v.Id" Video="v" />
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private ElementReference _root;
+    private DotNetObjectReference<Feed>? _self;
+    private IReadOnlyList<Video>? _videos;
+    private int _channelCount;
+    private bool _refreshing;
+    private string? _message;
+    private bool _messageIsError;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        _self = DotNetObjectReference.Create(this);
+        await JS.InvokeVoidAsync("blueTube.pullToRefresh", _root, _self);
+    }
+
+    [JSInvokable]
+    public Task OnPullRefresh() => InvokeAsync(RefreshAsync);
+
+    private async Task LoadAsync()
+    {
+        _channelCount = (await Repo.GetChannelsAsync()).Count;
+        _videos = await FeedSvc.GetFeedAsync(new FeedFilter(IsShort: false));
+    }
+
+    private async Task RefreshAsync()
+    {
+        if (_refreshing) return;
+        _refreshing = true;
+        _message = null;
+        StateHasChanged();
+        try
+        {
+            var result = await FeedSvc.RefreshAsync();
+            if (result.Error is not null)
+                Show(ErrorText.For(result.Error), error: true);
+            else if (result.ChannelErrors.Count > 0)
+                Show(string.Join("\n", result.ChannelErrors), error: true);
+            else
+                Show(result.Added == 0 ? "No new videos." : $"{result.Added} new videos.", error: false);
+
+            await LoadAsync();
+        }
+        catch (Exception e)
+        {
+            Show(ErrorText.For(e), error: true);
+        }
+        finally
+        {
+            _refreshing = false;
+        }
+    }
+
+    private void Show(string text, bool error)
+    {
+        _message = text;
+        _messageIsError = error;
+    }
+
+    public void Dispose() => _self?.Dispose();
+}

@@ -1,4 +1,7 @@
-﻿namespace BlueTube.App;
+﻿using BlueTube.App.Services;
+using BlueTube.Core.Services;
+
+namespace BlueTube.App;
 
 public static class MauiProgram
 {
@@ -14,6 +17,14 @@ public static class MauiProgram
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();
 #endif
+
+        // One HttpClient for the app lifetime (avoids socket exhaustion).
+        builder.Services.AddSingleton(new HttpClient { Timeout = TimeSpan.FromSeconds(30) });
+        builder.Services.AddSingleton<ISecretStore, SecureStorageSecretStore>();
+        builder.Services.AddSingleton<IVideoRepository>(
+            new SqliteVideoRepository(Path.Combine(FileSystem.AppDataDirectory, "bluetube.db")));
+        builder.Services.AddSingleton<IYouTubeService, YouTubeService>();
+        builder.Services.AddSingleton<FeedService>();
 
         return builder.Build();
     }
