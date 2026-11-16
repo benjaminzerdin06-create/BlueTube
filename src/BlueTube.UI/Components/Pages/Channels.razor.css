@@ -74,3 +74,45 @@
     background: transparent;
     color: var(--text-dim);
 }
+
+.transfer {
+    margin-top: 28px;
+    padding: 12px;
+    border-radius: var(--radius);
+    background: var(--surface);
+}
+
+.transfer summary {
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.transfer textarea {
+    width: 100%;
+    margin: 8px 0;
+    padding: 10px;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    color: var(--text);
+    font: 12px/1.4 ui-monospace, Consolas, monospace;
+    resize: vertical;
+}
+
+.transfer .row {
+    display: flex;
+    gap: 8px;
+}
+
+/* Imported channels have no thumbnail until the next refresh: show the first letter. */
+.avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-dim);
+    font-weight: 600;
+}

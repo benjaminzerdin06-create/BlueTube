@@ -9,3 +9,11 @@
 .shorts::-webkit-scrollbar {
     display: none;
 }
+
+/* Wide screen (desktop): keep Shorts phone-shaped (9:16) in the center. */
+@media (min-width: 700px) {
+    .shorts {
+        max-width: calc((100vh - var(--nav-height)) * 9 / 16);
+        margin: 0 auto;
+    }
+}

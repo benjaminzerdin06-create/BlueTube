@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- Desktop host for Windows and Linux: local Blazor Server app on 127.0.0.1, shown in a browser app window. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>BlueTube</AssemblyName>
+    <RootNamespace>BlueTube.Desktop</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTube.Core\BlueTube.Core.csproj" />
+    <ProjectReference Include="..\BlueTube.UI\BlueTube.UI.csproj" />
+  </ItemGroup>
+
+</Project>

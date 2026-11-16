@@ -1,4 +1,5 @@
 ﻿using BlueTube.App.Services;
+// Pages and components live in BlueTube.UI (shared with BlueTube.Desktop).
 using BlueTube.Core.Services;
 
 namespace BlueTube.App;

@@ -34,7 +34,8 @@ else
             <button class="@(_video.Watched ? "on" : "")" @onclick="() => ToggleAsync(v => v.Watched = !v.Watched)">✓ Watched</button>
             <button class="@(_video.WatchLater ? "on" : "")" @onclick="() => ToggleAsync(v => v.WatchLater = !v.WatchLater)">⏱ Later</button>
             <button class="@(_video.Favorite ? "on" : "")" @onclick="() => ToggleAsync(v => v.Favorite = !v.Favorite)">★ Favorite</button>
-            <button @onclick="OpenInYouTubeAsync">↗ YouTube</button>
+            @* External link: Android WebView and desktop browser both open it outside the app. *@
+            <a class="button" href="@YouTubeUrl" target="_blank" rel="noopener">↗ YouTube</a>
         </div>
 
         @if (_video.AiTagList.Count > 0)
@@ -80,17 +81,7 @@ else
         await Repo.UpdateVideoAsync(_video);
     }
 
-    private async Task OpenInYouTubeAsync()
-    {
-        try
-        {
-            await Launcher.Default.OpenAsync($"https://www.youtube.com/watch?v={Uri.EscapeDataString(Id)}");
-        }
-        catch (Exception)
-        {
-            // No app can open the link. Nothing to do.
-        }
-    }
+    private string YouTubeUrl => $"https://www.youtube.com/watch?v={Uri.EscapeDataString(Id)}";
 
     private async Task BackAsync() => await JS.InvokeVoidAsync("history.back");
 }

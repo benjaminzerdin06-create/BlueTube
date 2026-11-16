@@ -1,6 +1,6 @@
 # CLAUDE.md — BlueTube
 
-Personal phone app for watching **curated, high-quality tech YouTube videos and Shorts**. Single user, runs only on the owner's phone (Android, sideloaded APK). No backend server.
+Personal app for watching **curated, high-quality tech YouTube videos and Shorts**. Single user. Runs on the owner's phone (Android, sideloaded APK) and on Windows/Linux PCs (desktop app). No backend server.
 
 Claude Code writes most of this project. Follow this file strictly. Ask before deviating from the stack or structure.
 
@@ -20,16 +20,18 @@ How-to for common tasks (add channels on the phone, add fields, change Videos/Sh
 
 | Need | Use |
 |---|---|
-| App + UI | **.NET 10 MAUI Blazor Hybrid** (C#, `.razor`, HTML, CSS) |
+| UI | **Blazor** (`.razor`, HTML, CSS) in a shared Razor class library |
+| Android host | **.NET 10 MAUI Blazor Hybrid** |
+| Desktop host (Windows, Linux) | **ASP.NET Core Blazor Server** on `127.0.0.1`, shown in a browser app window (shared framework, no extra NuGet) |
 | Storage | **SQLite** via `sqlite-net-pcl` |
 | HTTP / JSON | Built-in `HttpClient` + `System.Text.Json` (no Google SDK) |
-| Secrets on device | MAUI `SecureStorage` |
+| Secrets | Android: MAUI `SecureStorage`. Desktop: plain JSON file in the user data folder (owner's choice; Linux mode 600) |
 | Tests | **NUnit** |
 | CI | GitHub Actions |
 
 **Do NOT add:** Google.Apis.*, Moq/NSubstitute, bUnit, CSS frameworks (Tailwind/Bootstrap), MVVM toolkits, DI containers beyond the built-in one, any JS framework. Plain CSS only. Hand-written fakes for tests.
 
-Allowed NuGet packages: `sqlite-net-pcl`, `NUnit`, `NUnit3TestAdapter`, `Microsoft.NET.Test.Sdk`. Anything else → ask first.
+Allowed NuGet packages: `sqlite-net-pcl`, `NUnit`, `NUnit3TestAdapter`, `Microsoft.NET.Test.Sdk`, `Microsoft.AspNetCore.Components.Web` (BlueTube.UI only; same version MAUI uses). Anything else → ask first.
 
 ---
 
@@ -45,22 +47,32 @@ src/
       IVideoRepository.cs / SqliteVideoRepository.cs
       IQualityFilter.cs / LlmQualityFilter.cs
       FeedService.cs    # orchestrates fetch → dedupe → store → score
-  BlueTube.App/         # MAUI Blazor Hybrid — UI only
+      JsonFileSettingsStore.cs  # desktop ISecretStore + IAppSettings
+      ChannelTransfer.cs        # channel list export/import (JSON text)
+  BlueTube.UI/          # Razor class library (net10.0) — ALL pages/components, shared by both hosts
     Components/
+      Routes.razor
+      Layout/           # MainLayout.razor (DB init, ErrorBoundary, tab bar)
       Pages/            # Feed.razor, Shorts.razor, Watch.razor, Channels.razor, Settings.razor
-      Shared/           # VideoCard.razor, ShortPlayer.razor, TagChip.razor
-    wwwroot/            # app.css, youtube player helper
+      Shared/           # VideoCard.razor, ShortPlayer.razor, TagChip.razor, KeyField.razor
+    Services/ErrorText.cs
+    wwwroot/            # app.css, app.js → served as _content/BlueTube.UI/...
+  BlueTube.App/         # MAUI Android host only: MauiProgram, MainPage, Platforms/Android, SecureStorage/Preferences
+  BlueTube.Desktop/     # Windows/Linux host: Program.cs, App.razor (HTML shell), AppWindow, AutoShutdown
 tests/
   BlueTube.Tests/       # NUnit, references Core only
     Fakes/              # FakeYouTubeService, FakeVideoRepository, FakeQualityFilter
-.github/workflows/tests.yml
+.github/workflows/tests.yml    # Core tests
+.github/workflows/desktop.yml  # desktop publish (win-x64, linux-x64) + Linux smoke test + artifacts
 ```
 
 **Rules**
-- `BlueTube.Core` must never reference MAUI. It must build and test on Linux.
+- `BlueTube.Core` and `BlueTube.UI` must never reference MAUI. Both build on Linux.
+- No MAUI APIs (`Launcher`, `FileSystem`, `Preferences`, ...) in `BlueTube.UI`. Put platform code behind a Core interface, implement it in each host.
 - `.razor` files contain UI and minimal glue. Business logic goes in Core services.
-- Every service has an interface. Register them in `MauiProgram.cs` with built-in DI.
-- Each component may have a scoped `Component.razor.css`. Global styles in `wwwroot/app.css`.
+- Every service has an interface. Register it in **both** `src/BlueTube.App/MauiProgram.cs` and `src/BlueTube.Desktop/Program.cs`.
+- Each component may have a scoped `Component.razor.css`. Global styles in `BlueTube.UI/wwwroot/app.css`.
+- UI must work at phone width and on a wide desktop window (see `.grid` in Feed, Shorts max-width).
 
 ---
 
@@ -114,6 +126,8 @@ tests/
 ## CI
 
 `.github/workflows/tests.yml`: on push + PR, `ubuntu-latest`, setup .NET 10, `dotnet test tests/BlueTube.Tests`. Do not build the MAUI app in CI for now.
+
+`.github/workflows/desktop.yml`: publish `BlueTube.Desktop` for `linux-x64` and `win-x64` (self-contained), start the Linux build and check it serves `/`, `blazor.web.js` and the `_content/BlueTube.UI` files, upload both folders as artifacts.
 
 ---
 

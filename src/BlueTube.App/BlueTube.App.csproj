@@ -38,6 +38,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\BlueTube.Core\BlueTube.Core.csproj" />
+        <ProjectReference Include="..\BlueTube.UI\BlueTube.UI.csproj" />
     </ItemGroup>
 
 </Project>

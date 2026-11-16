@@ -37,10 +37,14 @@
     overflow-x: auto;
 }
 
-.actions button {
+.actions button,
+.actions a.button {
     flex-shrink: 0;
     font-size: 13px;
     padding: 8px 12px;
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    color: var(--text);
 }
 
 .actions button.on {

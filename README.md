@@ -1,17 +1,21 @@
 # BlueTube
 
-Android app. Shows tech YouTube videos and Shorts from channels you select. An AI filter hides low-quality videos.
+Shows tech YouTube videos and Shorts from channels you select. An AI filter hides low-quality videos.
 
-Stack: .NET 10 MAUI Blazor Hybrid, SQLite. No server.
+Runs on **Android** (phone app) and on **Windows and Linux** (desktop app). No server.
 
-Spec and rules: [CLAUDE.md](CLAUDE.md).
+Stack: .NET 10, Blazor, SQLite. Android: MAUI Blazor Hybrid. Desktop: local Blazor Server app in a browser app window.
+
+Spec and rules: [CLAUDE.md](CLAUDE.md). How-to for Claude sessions: [docs/AGENT-GUIDE.md](docs/AGENT-GUIDE.md).
 
 ## Folders
 
 | Folder | Contents |
 |---|---|
-| `src/BlueTube.Core` | Logic: models, YouTube API, SQLite, quality filter. No MAUI. |
-| `src/BlueTube.App` | MAUI Blazor UI. |
+| `src/BlueTube.Core` | Logic: models, YouTube API, SQLite, quality filter, settings file. No UI. |
+| `src/BlueTube.UI` | Shared Blazor pages, components, CSS, JS. |
+| `src/BlueTube.App` | Android host (MAUI). |
+| `src/BlueTube.Desktop` | Windows and Linux host (ASP.NET Core). |
 | `tests/BlueTube.Tests` | NUnit tests for Core. |
 
 ## Test
@@ -20,7 +24,45 @@ Spec and rules: [CLAUDE.md](CLAUDE.md).
 dotnet test tests/BlueTube.Tests
 ```
 
-## Build the APK
+## Desktop app (Windows, Linux)
+
+### Get it
+
+Download `BlueTube-win-x64` or `BlueTube-linux-x64` from the latest **desktop** run under GitHub **Actions**. Unzip it anywhere. No .NET install needed.
+
+Or build it:
+
+```bash
+dotnet publish src/BlueTube.Desktop -c Release -r win-x64 --self-contained -o artifacts/desktop/win-x64
+```
+
+```bash
+dotnet publish src/BlueTube.Desktop -c Release -r linux-x64 --self-contained -o artifacts/desktop/linux-x64
+```
+
+### Start it
+
+- Windows: double-click `BlueTube.exe`.
+- Linux: `chmod +x BlueTube` once, then `./BlueTube`.
+
+BlueTube opens in an app window (Edge or Chrome app mode). If neither is installed, it opens in your default browser.
+
+- Address: `http://127.0.0.1:5217`. Only your own computer can open it.
+- It stops 30 s after you close the last BlueTube window.
+- Start it again while it runs: it only opens the window.
+
+### Data
+
+| OS | Folder |
+|---|---|
+| Windows | `%LOCALAPPDATA%\BlueTube` |
+| Linux | `~/.local/share/BlueTube` |
+
+`bluetube.db` keeps channels and videos. `settings.json` keeps API keys and settings as **plain text** (Linux: file mode 600). Do not share this file.
+
+Developer options: `--no-window` (do not open a window), `--data <folder>` (use another data folder).
+
+## Android app
 
 1. Install the MAUI Android workload:
 
@@ -51,9 +93,17 @@ The APK uses the debug signing key. Keep the same machine for updates, or uninst
 ## First start
 
 1. Get a YouTube Data API v3 key from Google Cloud Console.
-2. Open **Settings**. Enter the key. The app keeps keys in Android SecureStorage, not in source.
-3. Open **Channels**. Add channels by `@handle` or `UC...` ID.
-4. Open **Feed**. Pull down to refresh.
+2. Open **Settings**. Enter the key.
+3. Open **Channels**. Add channels by `@handle`, `UC...` ID or channel URL.
+4. Open **Feed**. Tap ⟳ (phone: or pull down).
+
+## Copy channels between phone and PC
+
+1. On one device: **Channels → Export / import channels → Copy**.
+2. Send the text to the other device (email, chat, notes).
+3. On the other device: paste it in the same box. Tap **Import**.
+
+Import adds channels and tags. It does not copy videos, watch history or API keys. It uses no YouTube quota.
 
 ## License
 

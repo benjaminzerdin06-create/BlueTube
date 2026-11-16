@@ -1,6 +1,7 @@
 @page "/channels"
 @inject FeedService Feed
 @inject IVideoRepository Repo
+@inject IJSRuntime JS
 
 <header class="page-header"><h1>Channels</h1></header>
 
@@ -32,7 +33,14 @@
             @foreach (var c in _channels)
             {
                 <li @key="c.Id">
-                    <img src="@c.ThumbnailUrl" alt="" loading="lazy" />
+                    @if (c.ThumbnailUrl.Length > 0)
+                    {
+                        <img src="@c.ThumbnailUrl" alt="" loading="lazy" />
+                    }
+                    else
+                    {
+                        <span class="avatar">@(c.Title.Length > 0 ? c.Title[..1] : "?")</span>
+                    }
                     <div class="main">
                         <div class="name">@c.Title</div>
                         @if (_editingId == c.Id)
@@ -68,9 +76,21 @@
             }
         </ul>
     }
+
+    @* Copy the channel list between phone and PC. Text only: works the same in WebView and browser. *@
+    <details class="transfer">
+        <summary>Export / import channels</summary>
+        <p class="hint">Export: copy this text to the other device. Import: paste text from the other device, then tap Import. Import uses no YouTube quota.</p>
+        <textarea rows="6" @bind="_transferText" @bind:event="oninput" spellcheck="false"></textarea>
+        <div class="row">
+            <button @onclick="CopyExportAsync">Copy</button>
+            <button class="primary" @onclick="ImportAsync" disabled="@string.IsNullOrWhiteSpace(_transferText)">Import</button>
+        </div>
+    </details>
 </div>
 
 @code {
+    private string _transferText = "";
     private IReadOnlyList<Channel>? _channels;
     private string _input = "";
     private string _tags = "";
@@ -83,7 +103,12 @@
 
     protected override async Task OnInitializedAsync() => await LoadAsync();
 
-    private async Task LoadAsync() => _channels = await Repo.GetChannelsAsync();
+    private async Task LoadAsync()
+    {
+        _channels = await Repo.GetChannelsAsync();
+        // The transfer box always shows the current list, ready to copy.
+        _transferText = ChannelTransfer.Export(_channels);
+    }
 
     private async Task AddAsync()
     {
@@ -133,6 +158,34 @@
         await Repo.DeleteChannelAsync(c.Id);
         _confirmDeleteId = null;
         await LoadAsync();
+    }
+
+
+    private async Task CopyExportAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", _transferText);
+            Show("Copied.", error: false);
+        }
+        catch (JSException)
+        {
+            Show("Cannot copy here. Select the text and copy it.", error: true);
+        }
+    }
+
+    private async Task ImportAsync()
+    {
+        try
+        {
+            var added = await Feed.ImportChannelsAsync(_transferText);
+            Show($"Imported {added} new channels. Refresh the feed to get videos.", error: false);
+            await LoadAsync();
+        }
+        catch (FormatException e)
+        {
+            Show(e.Message, error: true);
+        }
     }
 
     private void Show(string text, bool error)

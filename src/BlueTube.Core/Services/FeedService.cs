@@ -77,6 +77,14 @@ public sealed class FeedService(IYouTubeService youTube, IVideoRepository repo, 
         {
             try
             {
+                // Imported channels have no thumbnail. Get it (and the real title) once.
+                if (channel.ThumbnailUrl.Length == 0
+                    && await youTube.ResolveChannelAsync(channel.Id, ct) is { } info)
+                {
+                    channel.Title = info.Title;
+                    channel.ThumbnailUrl = info.ThumbnailUrl;
+                }
+
                 var since = await repo.GetLatestPublishedAtAsync(channel.Id, ct);
                 var videos = await youTube.GetNewVideosAsync(channel, since, ct);
                 foreach (var v in videos)
@@ -113,6 +121,35 @@ public sealed class FeedService(IYouTubeService youTube, IVideoRepository repo, 
         channel.TagList = tags.ToList();
         await repo.UpsertChannelAsync(channel, ct);
         return channel;
+    }
+
+    public async Task<string> ExportChannelsAsync(CancellationToken ct = default) =>
+        ChannelTransfer.Export(await repo.GetChannelsAsync(ct));
+
+    /// <summary>
+    /// Adds channels from export text. No YouTube calls (0 quota).
+    /// Known channels: tags are merged. Next refresh gets their videos.
+    /// </summary>
+    /// <returns>Number of new channels.</returns>
+    /// <exception cref="FormatException">Text is not a BlueTube export.</exception>
+    public async Task<int> ImportChannelsAsync(string json, CancellationToken ct = default)
+    {
+        var added = 0;
+        foreach (var channel in ChannelTransfer.Import(json))
+        {
+            var existing = await repo.GetChannelAsync(channel.Id, ct);
+            if (existing is null)
+            {
+                await repo.UpsertChannelAsync(channel, ct);
+                added++;
+            }
+            else
+            {
+                existing.TagList = existing.TagList.Concat(channel.TagList).ToList();
+                await repo.UpsertChannelAsync(existing, ct);
+            }
+        }
+        return added;
     }
 
     public async Task<IReadOnlyList<Video>> GetFeedAsync(FeedFilter filter, CancellationToken ct = default)

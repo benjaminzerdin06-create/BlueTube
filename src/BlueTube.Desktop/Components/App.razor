@@ -1,0 +1,39 @@
+@using BlueTube.UI.Components
+@using Microsoft.AspNetCore.Components.Web
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    @* Same as the phone app: prevents YouTube embed error 152/153. *@
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <title>BlueTube</title>
+    <base href="/" />
+    <link rel="stylesheet" href="@Assets["_content/BlueTube.UI/app.css"]" />
+    <link rel="stylesheet" href="@Assets["BlueTube.styles.css"]" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#0b0f17" />
+    <HeadOutlet @rendermode="NoPrerender" />
+</head>
+
+<body>
+    <Routes @rendermode="NoPrerender" />
+
+    <div id="blazor-error-ui" data-nosnippet>
+        Error. <a href="." class="reload">Reload</a>
+        <span class="dismiss">🗙</span>
+    </div>
+
+    <script src="_framework/blazor.web.js"></script>
+    <script src="@Assets["_content/BlueTube.UI/app.js"]"></script>
+</body>
+
+</html>
+
+@code {
+    // No prerender: pages load data in OnInitializedAsync and use JS interop. Prerender would run them twice.
+    private static readonly IComponentRenderMode NoPrerender = new InteractiveServerRenderMode(prerender: false);
+}

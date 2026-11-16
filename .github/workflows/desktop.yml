@@ -1,0 +1,46 @@
+name: desktop
+
+# Build the desktop app (Windows + Linux), smoke-test the Linux build, upload both as artifacts.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish linux-x64 and win-x64
+        run: |
+          for rid in linux-x64 win-x64; do
+            dotnet publish src/BlueTube.Desktop -c Release -r $rid --self-contained -o artifacts/BlueTube-$rid
+          done
+
+      - name: Smoke test (Linux build starts and serves its files)
+        run: |
+          data=$(mktemp -d)
+          ./artifacts/BlueTube-linux-x64/BlueTube --no-window --data "$data" > app.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf -o /dev/null http://127.0.0.1:5217/ && break; sleep 1; done
+          for u in / /_framework/blazor.web.js /_content/BlueTube.UI/app.css /_content/BlueTube.UI/app.js /BlueTube.styles.css; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:5217$u")
+            echo "$code $u"
+            test "$code" = "200"
+          done
+          kill %1
+          cat app.log
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BlueTube-linux-x64
+          path: artifacts/BlueTube-linux-x64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BlueTube-win-x64
+          path: artifacts/BlueTube-win-x64

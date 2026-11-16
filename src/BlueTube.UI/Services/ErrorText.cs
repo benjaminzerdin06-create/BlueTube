@@ -1,6 +1,6 @@
 using BlueTube.Core.Services;
 
-namespace BlueTube.App.Services;
+namespace BlueTube.UI.Services;
 
 /// <summary>Short user messages for errors.</summary>
 public static class ErrorText

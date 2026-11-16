@@ -2,7 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:BlueTube.App"
-             xmlns:components="clr-namespace:BlueTube.App.Components"
+             xmlns:ui="clr-namespace:BlueTube.UI.Components;assembly=BlueTube.UI"
              x:Class="BlueTube.App.MainPage"
              BackgroundColor="#0b0f17"
              SafeAreaEdges="All">
@@ -10,7 +10,7 @@
 
     <BlazorWebView x:Name="blazorWebView" HostPage="wwwroot/index.html">
         <BlazorWebView.RootComponents>
-            <RootComponent Selector="#app" ComponentType="{x:Type components:Routes}" />
+            <RootComponent Selector="#app" ComponentType="{x:Type ui:Routes}" />
         </BlazorWebView.RootComponents>
     </BlazorWebView>
 

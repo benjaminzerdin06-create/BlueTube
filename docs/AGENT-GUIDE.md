@@ -172,20 +172,32 @@ src/BlueTube.Core/                 all logic, no MAUI
   Services/IQualityFilter.cs       interface + IAppSettings + errors
   Services/LlmQualityFilter.cs     Claude Messages API, raw HTTP
   Services/ISecretStore.cs         interface + SecretNames
-src/BlueTube.App/                  MAUI Blazor UI
-  MauiProgram.cs                   DI registrations
-  MainPage.xaml(.cs)               BlazorWebView, Android back button, fullscreen client
-  Platforms/Android/FullscreenChromeClient.cs
-  Services/SecureStorageSecretStore.cs, PreferencesAppSettings.cs, ErrorText.cs
+  Services/JsonFileSettingsStore.cs  desktop secrets + settings (plain JSON file)
+  Services/ChannelTransfer.cs      channel list export/import (JSON text)
+src/BlueTube.UI/                   shared Blazor UI (Razor class library) — used by App AND Desktop
+  Components/Routes.razor
   Components/Layout/MainLayout.razor   DB init, ErrorBoundary, bottom tab bar
   Components/Pages/Feed.razor      "/"
   Components/Pages/Watch.razor     "/watch/{Id}"
   Components/Pages/Shorts.razor    "/shorts"
-  Components/Pages/Channels.razor  "/channels"
+  Components/Pages/Channels.razor  "/channels" (+ Export / import box)
   Components/Pages/Settings.razor  "/settings"
   Components/Shared/VideoCard.razor, ShortPlayer.razor, TagChip.razor, KeyField.razor
-  wwwroot/app.css                  global styles + color tokens (:root)
+  Services/ErrorText.cs            user messages for errors
+  wwwroot/app.css                  global styles + color tokens (:root) → _content/BlueTube.UI/app.css
   wwwroot/app.js                   pull-to-refresh, Shorts observer, player commands
+src/BlueTube.App/                  Android host (MAUI) — no pages here
+  MauiProgram.cs                   DI registrations (Android)
+  MainPage.xaml(.cs)               BlazorWebView, Android back button, fullscreen client
+  Platforms/Android/FullscreenChromeClient.cs
+  Services/SecureStorageSecretStore.cs, PreferencesAppSettings.cs
+  wwwroot/index.html               HTML shell (Android)
+src/BlueTube.Desktop/              Windows/Linux host (ASP.NET Core Blazor Server)
+  Program.cs                       DI registrations (desktop), port 5217, data folder
+  Components/App.razor             HTML shell (desktop)
+  AppWindow.cs                     opens Edge/Chrome --app window, port check
+  AutoShutdown.cs                  stops 30 s after last window closes
+  wwwroot/manifest.webmanifest, icon.svg
 tests/BlueTube.Tests/              NUnit, Core only
   Fakes/                           FakeHttpHandler, FakeYouTubeService, FakeVideoRepository,
                                    FakeQualityFilter (+ FakeAppSettings), FakeSecretStore
@@ -287,8 +299,8 @@ Not built yet. If the owner asks for it:
 | One Short | `Components/Shared/ShortPlayer.razor` | Live `<iframe>` only when `Active`. Else a thumbnail. |
 | Swipe container | `Shorts.razor.css` | `scroll-snap-type: y mandatory`, height = viewport minus tab bar. |
 | Item layout | `ShortPlayer.razor.css` | `.touch-layer` covers top 78%; bottom 22% stays free for YouTube controls and ad "Skip". |
-| Visible-item detect | `wwwroot/app.js` → `observeShorts` | IntersectionObserver, threshold 0.6, calls .NET `OnActive(index)`. |
-| Pause / play | `wwwroot/app.js` → `playerCommand` | postMessage to the iframe. Needs `enablejsapi=1` in the embed URL. |
+| Visible-item detect | `src/BlueTube.UI/wwwroot/app.js` → `observeShorts` | IntersectionObserver, threshold 0.6, calls .NET `OnActive(index)`. |
+| Pause / play | `src/BlueTube.UI/wwwroot/app.js` → `playerCommand` | postMessage to the iframe. Needs `enablejsapi=1` in the embed URL. |
 
 ### 6.3 Common Shorts changes
 
@@ -304,7 +316,7 @@ Not built yet. If the owner asks for it:
 
 - Official YouTube IFrame embed only. Ads stay. No ad blocking, no download, no scraping.
 - Every embed URL must have `origin=<app origin>` and `widget_referrer=<app origin>`. Get the origin from `new Uri(Nav.BaseUri).GetLeftPart(UriPartial.Authority)`.
-- Every `<iframe>` must have `referrerpolicy="strict-origin-when-cross-origin"`. `index.html` also has a referrer meta tag. Do not remove it.
+- Every `<iframe>` must have `referrerpolicy="strict-origin-when-cross-origin"`. Both HTML shells (`src/BlueTube.App/wwwroot/index.html`, `src/BlueTube.Desktop/Components/App.razor`) have a referrer meta tag. Do not remove it.
 - These prevent YouTube error 152/153 in the WebView. Tested OK on the A13.
 - Fullscreen: `Platforms/Android/FullscreenChromeClient.cs`. Autoplay: `MainPage.xaml.cs` sets `MediaPlaybackRequiresUserGesture = false`.
 
@@ -312,15 +324,41 @@ Not built yet. If the owner asks for it:
 
 ## 8. New page or tab
 
-1. `Components/Pages/NewPage.razor` with `@page "/new"`. Optional `NewPage.razor.css`.
+1. `src/BlueTube.UI/Components/Pages/NewPage.razor` with `@page "/new"`. Optional `NewPage.razor.css`.
 2. Inject services with `@inject`. **The property name must differ from the component class name.** `@inject FeedService Feed` in `Feed.razor` failed to build (CS0542). Use `FeedSvc`.
 3. Tab: `Components/Layout/MainLayout.razor` → add a `<NavLink href="new">` with an inline 24 x 24 SVG and a `<span>`. Five tabs fit; more do not.
-4. New service: interface + class in Core, register in `MauiProgram.cs` with `AddSingleton`.
+4. New service: interface + class in Core, register with `AddSingleton` in **both** `src/BlueTube.App/MauiProgram.cs` and `src/BlueTube.Desktop/Program.cs`.
 
 ## 9. New setting
 
-- Not secret (number, choice): add a property to `IAppSettings` (`IQualityFilter.cs`), implement it in `App/Services/PreferencesAppSettings.cs` (MAUI `Preferences`) and in `Fakes/FakeQualityFilter.cs` → `FakeAppSettings`. UI in `Settings.razor`.
-- Secret (API key): add a name to `SecretNames` (`ISecretStore.cs`). UI: `<KeyField Name="@SecretNames.NewKey" />` in `Settings.razor`.
+- Not secret (number, choice): add a property to `IAppSettings` (`IQualityFilter.cs`). Implement it in **three** places: `src/BlueTube.App/Services/PreferencesAppSettings.cs` (MAUI `Preferences`), `src/BlueTube.Core/Services/JsonFileSettingsStore.cs` (desktop, add a key constant + property like `MinScore`), and `Fakes/FakeQualityFilter.cs` → `FakeAppSettings`. Add a test in `DesktopSupportTests.JsonFileSettingsStoreTests`. UI in `Settings.razor`.
+- Secret (API key): add a name to `SecretNames` (`ISecretStore.cs`). UI: `<KeyField Name="@SecretNames.NewKey" />` in `Settings.razor`. Both stores accept any name; no other change.
+
+---
+
+## 9a. Desktop app (Windows, Linux)
+
+Host: `src/BlueTube.Desktop`. It shows the **same** pages as the phone (from `BlueTube.UI`). A UI change applies to both apps. Test both.
+
+| Task | What to do |
+|---|---|
+| Run from source (test data, no window) | `dotnet run --project src/BlueTube.Desktop -- --no-window --data <scratch folder>`. Then open `http://127.0.0.1:5217` in the built-in browser pane. Stop: kill the process on port 5217. |
+| Run with a window | `dotnet run --project src/BlueTube.Desktop`. Opens Edge/Chrome in `--app` mode. **Uses the owner's real desktop data** (`%LOCALAPPDATA%\BlueTube`). |
+| Publish | `dotnet publish src/BlueTube.Desktop -c Release -r win-x64 --self-contained -o artifacts/desktop/win-x64` (also `linux-x64`). `artifacts/` is git-ignored. |
+| Check a publish | Start `BlueTube.exe --no-window --data <folder>`. Get `/`, `/_framework/blazor.web.js`, `/_content/BlueTube.UI/app.css` → all 200. |
+| Linux test | WSL cannot run here (virtualization off in firmware; do not change it). Push, then read the **desktop** workflow: it starts the Linux build and checks the files. `gh run list --workflow desktop.yml --limit 1`. |
+| Change the port | `const int Port` in `Program.cs`. The YouTube embed origin changes with it. |
+| Desktop-only service | Implement the Core interface in `BlueTube.Desktop` (or in Core if pure .NET and testable), register in `Program.cs`. |
+
+Rules:
+
+- **No MAUI API in `BlueTube.UI`.** `Launcher`, `FileSystem`, `Preferences`, `SecureStorage`, `Platform` do not exist on desktop. Example: "Open in YouTube" is a plain `<a target="_blank">`; both hosts open it outside the app.
+- Pages run with `InteractiveServerRenderMode(prerender: false)` on desktop. Do not depend on prerender.
+- Without `builder.WebHost.UseStaticWebAssets()` in `Program.cs`, `dotnet run` gives HTTP 500 for `_content/...` files. Keep it.
+- Layout must work at phone width and at desktop width. Feed cards use `.grid` (auto columns, min 300 px). Shorts use a 9:16 max-width on screens ≥ 700 px.
+- Desktop keys are **plain text** in `settings.json` (owner's choice). Never print or log them.
+
+Channel export/import (`ChannelTransfer`): the JSON has `id`, `title`, `thumbnail`, `tags`. If you add a Channel field that must move between devices, add it to `ExportChannel` and to `Import`, and keep old exports readable (new fields optional).
 
 ---
 
@@ -332,6 +370,7 @@ Not built yet. If the owner asks for it:
 | Razor error RZ10007 / CS1525 | Nested `"` inside an attribute lambda, e.g. `@oninput="e => ... ?? "0""` | Move the code to a method: `@oninput="OnSliderInput"`. |
 | CS0542 | `@inject X Feed` inside `Feed.razor` | Use a different property name. |
 | Header under status bar | WebView draws edge-to-edge | `SafeAreaEdges="All"` on `MainPage.xaml`. Keep it. |
+| Desktop: `_content/...` gives 500 | Static web assets off outside Development | `builder.WebHost.UseStaticWebAssets()` in Desktop `Program.cs`. |
 | Install fails `NO_MATCHING_ABIS` | Phone is 32-bit only | Keep `<RuntimeIdentifiers>android-arm;android-arm64</RuntimeIdentifiers>` in `BlueTube.App.csproj`. |
 | Literal `@` in markup | Razor treats `@` as code | Write `@@`. |
 | Raw string JSON in tests fails CS9007 | `}}` inside a `$$"""` string | Use `$$$"""` with `{{{x}}}`, or a plain `"""` string plus `.Replace`. |
@@ -341,8 +380,8 @@ Not built yet. If the owner asks for it:
 ## 11. Finish a change
 
 1. `dotnet test tests/BlueTube.Tests`: all pass.
-2. Build the APK (section 1). No new warnings.
-3. Install on the phone. Screenshot the changed screen. Read the logs.
+2. Build the APK (section 1) **and** the desktop app (`dotnet build src/BlueTube.Desktop`). No new warnings.
+3. Install on the phone. Screenshot the changed screen. Read the logs. For UI changes also open the desktop app (section 9a) in the browser pane.
 4. Commit. One focused commit per change. STE body. Example:
 
    ```

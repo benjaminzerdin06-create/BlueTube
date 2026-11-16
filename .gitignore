@@ -483,3 +483,6 @@ $RECYCLE.BIN/
 
 # Local secrets/config
 *.local.json
+
+# Local publish output
+artifacts/

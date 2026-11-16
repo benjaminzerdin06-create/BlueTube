@@ -61,16 +61,18 @@
                 }
                 else
                 {
-                    <p>No videos. Pull down to refresh.</p>
+                    <p>No videos. Tap ⟳ to refresh.</p>
                 }
             </div>
         }
         else
         {
-            @foreach (var v in _videos)
-            {
-                <VideoCard @key="v.Id" Video="v" />
-            }
+            <div class="grid">
+                @foreach (var v in _videos)
+                {
+                    <VideoCard @key="v.Id" Video="v" />
+                }
+            </div>
         }
     </div>
 </div>

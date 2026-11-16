@@ -58,3 +58,10 @@
     background: rgba(239, 68, 68, .15);
     color: #fca5a5;
 }
+
+/* Phone: one column. Wide screen (desktop): as many 300px+ columns as fit. */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    column-gap: 18px;
+}
